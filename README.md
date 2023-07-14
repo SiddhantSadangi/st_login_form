@@ -2,8 +2,12 @@
 
 A streamlit component that creates a user login form connected to a Supabase DB. It lets users create a new username and password, login to an existing account, or login as an anonymous guest.
 
+![Form screenshot](assets/screenshot.png)
+
+The login form collapses after login to no occupy screen-space.
+
 ## :computer: Demo app
-[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://st_login_form.streamlit.app/)
+[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://st-lgn-form.streamlit.app/)
 
 ## :construction: Installation instructions 
 
@@ -12,7 +16,7 @@ A streamlit component that creates a user login form connected to a Supabase DB.
 pip install st-login-form
 ```
 2. Create a Supabase project as mentioned [here](https://docs.streamlit.io/knowledge-base/tutorials/databases/supabase#sign-in-to-supabase-and-create-a-project)
-3. Create a table to store the usernames and passwords
+3. Create a table to store the usernames and passwords. The table name and column names can be as per your choice.
 ```sql
 CREATE TABLE users (
     username text not null default ''::text,
@@ -66,4 +70,4 @@ else:
     st.error("Not authenticated")
 ```
 
-[![See demo in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://st_login_form.streamlit.app/)
+[![See demo in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://st-lgn-form.streamlit.app/)

@@ -22,7 +22,7 @@ def login_form(
     create_title: str = "Create new account :baby: ",
     login_title: str = "Login to existing account :prince: ",
     allow_guest: bool = True,
-    guest_title: str = "Play as guest :ninja: ",
+    guest_title: str = "Guest login :ninja: ",
     create_username_label: str = "Create a unique username",
     create_username_placeholder: str = None,
     create_username_help: str = None,
@@ -96,6 +96,7 @@ def login_form(
 
                 if st.form_submit_button(
                     label=create_submit_label,
+                    type="primary",
                     disabled=st.session_state["authenticated"],
                 ):
                     try:
@@ -150,6 +151,7 @@ def login_form(
             with guest_tab:
                 if st.button(
                     label=guest_submit_label,
+                    type="primary",
                     disabled=st.session_state["authenticated"],
                 ):
                     st.session_state["authenticated"] = True
