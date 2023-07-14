@@ -1,6 +1,6 @@
 import streamlit as st
 
-from streamlit_login import login_form
+from st_login_form import login_form
 
 login_form(user_tablename="demo_users")
 
