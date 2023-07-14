@@ -7,7 +7,7 @@ long_description = (this_directory / "README.md").read_text()
 
 setuptools.setup(
     name="st-login-form",
-    version="0.1.0",
+    version="0.1.1",
     author="Siddhant Sadangi",
     author_email="siddhant.sadangi@gmail.com",
     description="A streamlit component that creates a user login form connected to a Supabase DB. It lets users create a new username and password, login to an existing account, or login as an anonymous guest.",
