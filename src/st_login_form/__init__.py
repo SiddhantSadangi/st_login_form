@@ -41,16 +41,19 @@ def login_form(
     login_success_message: str = "Login succeeded :tada:",
     login_error_message: str = "Wrong username/password :x: ",
     guest_submit_label: str = "Guest login",
-) -> None:
+) -> Client:
     """Creates a user login form in Streamlit apps.
 
     Connects to a Supabase DB using `SUPABASE_URL` and `SUPABASE_KEY` Streamlit secrets.
     Sets `session_state["authenticated"]` to True if the login is successful.
     Sets `session_state["username"]` to provided username or new or existing user, and to `None` for guest login.
+
+    Returns:
+    Supabase client instance
     """
 
     # Initialize supabase connection
-    supabase = init_connection()
+    client = init_connection()
 
     # User Authentication
     if "authenticated" not in st.session_state:
@@ -101,7 +104,7 @@ def login_form(
                 ):
                     try:
                         data, _ = (
-                            supabase.table(user_tablename)
+                            client.table(user_tablename)
                             .insert({username_col: username, password_col: password})
                             .execute()
                         )
@@ -134,7 +137,7 @@ def login_form(
                     type="primary",
                 ):
                     data, _ = (
-                        supabase.table(user_tablename)
+                        client.table(user_tablename)
                         .select(f"{username_col}, {password_col}")
                         .eq(username_col, username)
                         .eq(password_col, password)
@@ -155,6 +158,8 @@ def login_form(
                     disabled=st.session_state["authenticated"],
                 ):
                     st.session_state["authenticated"] = True
+
+        return client
 
 
 def main() -> None:

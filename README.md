@@ -54,12 +54,14 @@ CREATE TABLE users (
 
 `login_form()` sets `session_state["authenticated"]` to `True` if the login is successful, `session_state["username"]` to the `username` or new or existing user, and to `None` for guest login.
 
+Returns supabase `Client` instance.
+
 ```python
 import streamlit as st
 
 from streamlit_login import login_form
 
-login_form()
+client = login_form()
 
 if st.session_state["authenticated"]:
     if st.session_state["username"]:
