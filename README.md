@@ -4,7 +4,7 @@ A streamlit component that creates a user login form connected to a Supabase DB.
 
 ![Form screenshot](assets/screenshot.png)
 
-The login form collapses after login to no occupy screen-space.
+The login form collapses after login to free screen-space.
 
 ## :computer: Demo app
 [![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://st-lgn-form.streamlit.app/)
