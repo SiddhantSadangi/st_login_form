@@ -9,7 +9,7 @@ The login form collapses after login to free screen-space.
 ## :computer: Demo app
 [![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://st-lgn-form.streamlit.app/)
 
-## :construction: Installation instructions 
+## :construction: Installation 
 
 1. Install `st-login-form` 
 ```sh
@@ -50,7 +50,7 @@ CREATE TABLE users (
 4. Follow the rest of the steps from [here](https://docs.streamlit.io/knowledge-base/tutorials/databases/supabase#copy-your-app-secrets-to-the-cloud) to connect your Streamlit app to Supabase
 
 
-## :pen: Usage instructions
+## :pen: Usage
 
 `login_form()` sets `session_state["authenticated"]` to `True` if the login is successful, `session_state["username"]` to the `username` or new or existing user, and to `None` for guest login.
 
