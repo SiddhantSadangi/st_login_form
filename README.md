@@ -1,4 +1,5 @@
 # :lock: st-login-form
+[![Downloads](https://static.pepy.tech/personalized-badge/st-login-form?period=total&units=international_system&left_color=black&right_color=brightgreen&left_text=Downloads)](https://pepy.tech/project/st-login-form)
 
 A streamlit component that creates a user login form connected to a Supabase DB. It lets users create a new username and password, login to an existing account, or login as an anonymous guest.
 
