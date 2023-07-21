@@ -7,7 +7,7 @@ long_description = (this_directory / "README.md").read_text()
 
 setuptools.setup(
     name="st-login-form",
-    version="0.2.0",
+    version="0.3.0",
     url="https://github.com/SiddhantSadangi/st_login_form",
     author="Siddhant Sadangi",
     author_email="siddhant.sadangi@gmail.com",
@@ -16,7 +16,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     project_urls={
         "Documentation": "https://github.com/SiddhantSadangi/st_login_form/blob/main/README.md",
-        "Funding": "https://www.buymeacoffee.com/siddhantsadangi",
+        "Support": "https://www.buymeacoffee.com/siddhantsadangi",
     },
     packages=setuptools.find_packages(where="src"),
     package_dir={"": "src"},

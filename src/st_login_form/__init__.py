@@ -28,7 +28,7 @@ def login_form(
     create_username_help: str = None,
     create_password_label: str = "Create a password",
     create_password_placeholder: str = None,
-    create_password_help: str = "⚠️ Password will be stored as plain text. Do not reuse from other websites. Password cannot be recovered.",
+    create_password_help: str = "⚠️ Remember your password. You won't be able to recover it if forgotten.",
     create_submit_label: str = "Create account",
     create_success_message: str = "Account created :tada:",
     login_username_label: str = "Enter your unique username",
@@ -105,7 +105,9 @@ def login_form(
                     try:
                         data, _ = (
                             client.table(user_tablename)
-                            .insert({username_col: username, password_col: password})
+                            .insert(
+                                {username_col: username, password_col: hash(password)}
+                            )
                             .execute()
                         )
                     except Exception as e:
@@ -140,7 +142,7 @@ def login_form(
                         client.table(user_tablename)
                         .select(f"{username_col}, {password_col}")
                         .eq(username_col, username)
-                        .eq(password_col, password)
+                        .eq(password_col, hash(password))
                         .execute()
                     )
 
@@ -165,7 +167,7 @@ def login_form(
 def main() -> None:
     login_form(
         create_username_placeholder="Username will be visible in the global leaderboard.",
-        create_password_placeholder="⚠️ Password will be stored as plain text. You won't be able to recover it if you forget.",
+        create_password_placeholder="⚠️ Remember your password. You won't be able to recover it if you forget.",
         guest_submit_label="Play as a guest ⚠️ Scores won't be saved",
     )
 
