@@ -23,6 +23,7 @@ setuptools.setup(
     include_package_data=True,
     classifiers=[
         "Environment :: Plugins",
+        "Environment :: Web Environment",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
         "Operating System :: OS Independent",

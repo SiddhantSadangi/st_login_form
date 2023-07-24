@@ -10,9 +10,9 @@ The login form collapses after login to free screen-space.
 ## :computer: Demo app
 [![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://st-lgn-form.streamlit.app/)
 
-## :construction: Installation 
+## :construction: Installation
 
-1. Install `st-login-form` 
+1. Install `st-login-form`
 ```sh
 pip install st-login-form
 ```
@@ -60,7 +60,7 @@ Returns the initialized `supabase.Client` instance to let you interact with the 
 ```python
 import streamlit as st
 
-from streamlit_login import login_form
+from st_login_form import login_form
 
 client = login_form()
 
