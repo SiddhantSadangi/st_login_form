@@ -5,9 +5,19 @@ import setuptools
 this_directory = Path(__file__).parent
 long_description = (this_directory / "README.md").read_text()
 
+
+def get_version(rel_path):
+    with open(rel_path, "r", encoding="UTF-8") as f:
+        for line in f:
+            if line.startswith("__version__"):
+                delim = '"' if '"' in line else "'"
+                return line.split(delim)[1]
+    raise RuntimeError("Unable to find version string.")
+
+
 setuptools.setup(
     name="st-login-form",
-    version="0.2.0",
+    version=get_version("src/st_login_form/__init__.py"),
     url="https://github.com/SiddhantSadangi/st_login_form",
     author="Siddhant Sadangi",
     author_email="siddhant.sadangi@gmail.com",

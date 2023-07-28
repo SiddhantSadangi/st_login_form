@@ -1,5 +1,7 @@
 import streamlit as st
-from supabase import create_client, Client
+from supabase import Client, create_client
+
+__version__ = "0.2.1"
 
 
 @st.cache_resource
