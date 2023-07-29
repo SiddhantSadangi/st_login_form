@@ -35,7 +35,7 @@ st.write("2. Import")
 st.code("from st_login_form import login_form", language="python")
 st.write("3. Use")
 st.code("client = login_form()", language="python")
-st.success("Explore the arguments you can pass to `login_form()`")
+st.info("💡 Explore the arguments you can pass to `login_form()`")
 st.write(
     "`login_form()` creates the below form and returns the `Supabase.client` instance that can then be used to perform downstream supabase operations"
 )
