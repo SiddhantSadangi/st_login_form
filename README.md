@@ -53,9 +53,8 @@ CREATE TABLE users (
 
 ## :pen: Usage
 
-`login_form()` sets `session_state["authenticated"]` to `True` if the login is successful, `session_state["username"]` to the `username` or new or existing user, and to `None` for guest login.
-
-Returns the initialized `supabase.Client` instance to let you interact with the databse downstream in the script.
+On authentication, `login_form()` sets the `st.session_state['authenticated']` to `True`. This also collapses and disables the login form.  
+`st.session_state['username']` is set to the provided username for a new or existing user, and to `None` for guest login.
 
 ```python
 import streamlit as st
