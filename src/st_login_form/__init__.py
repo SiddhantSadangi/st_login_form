@@ -1,12 +1,18 @@
 import streamlit as st
 from supabase import Client, create_client
 
-__version__ = "0.2.1"
+__version__ = "0.2.2"
 
 
 @st.cache_resource
 def init_connection() -> Client:
-    return create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
+    try:
+        return create_client(
+            st.secrets["connections"]["supabase"]["SUPABASE_URL"],
+            st.secrets["connections"]["supabase"]["SUPABASE_KEY"],
+        )
+    except KeyError:
+        return create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
 
 
 def login_success(message: str, username: str) -> None:
