@@ -23,7 +23,7 @@ with st.sidebar:
     st.components.v1.html(sidebar_html, height=600)
 
 # ---------- MAIN PAGE ----------
-st.title("🔐 [`st-login-form`](https://github.com/SiddhantSadangi/st_login_form) demo app ")
+st.title("🔐 [`st-login-form`](https://github.com/SiddhantSadangi/st_login_form) demo app")
 
 st.write(
     "This app shows how you can use the `st-login-form` component to create user-login forms for Streamlit apps."
@@ -43,7 +43,7 @@ st.write(
 client = st_login_form.login_form(user_tablename="demo_users")
 
 st.write(
-    "On authentication, `login_form()` sets the `st.session_state['authenticated']` to `True`. This also collapses and disables the login form."
+    "On authentication, `login_form()` sets `st.session_state['authenticated']` to `True`. This also collapses and disables the login form."
 )
 st.write(
     "`st.session_state['username']` is set to the provided username for a new or existing user, and to `None` for guest login."
