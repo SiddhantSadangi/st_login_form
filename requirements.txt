@@ -1,3 +1,4 @@
+st-social-media-links
+st_login_form
 streamlit
 supabase
-st_login_form
