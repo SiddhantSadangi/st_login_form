@@ -1,7 +1,7 @@
 import streamlit as st
 from supabase import Client, create_client
 
-__version__ = "0.2.2"
+__version__ = "0.2.3"
 
 
 @st.cache_resource
@@ -111,13 +111,12 @@ def login_form(
                     disabled=st.session_state["authenticated"],
                 ):
                     try:
-                        data, _ = (
-                            client.table(user_tablename)
-                            .insert({username_col: username, password_col: password})
-                            .execute()
-                        )
+                        client.table(user_tablename).insert(
+                            {username_col: username, password_col: password}
+                        ).execute()
                     except Exception as e:
                         st.error(e.message)
+                        st.session_state["authenticated"] = False
                     else:
                         login_success(create_success_message, username)
 
@@ -144,7 +143,7 @@ def login_form(
                     disabled=st.session_state["authenticated"],
                     type="primary",
                 ):
-                    data, _ = (
+                    response = (
                         client.table(user_tablename)
                         .select(f"{username_col}, {password_col}")
                         .eq(username_col, username)
@@ -152,10 +151,11 @@ def login_form(
                         .execute()
                     )
 
-                    if len(data[-1]) > 0:
+                    if len(response.data) > 0:
                         login_success(login_success_message, username)
                     else:
                         st.error(login_error_message)
+                        st.session_state["authenticated"] = False
 
         # Guest login
         if allow_guest:
