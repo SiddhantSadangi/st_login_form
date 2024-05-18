@@ -1,5 +1,6 @@
 import streamlit as st
 from st_social_media_links import SocialMediaIcons
+from streamlit.components.v1 import html as st_html
 
 import st_login_form
 
@@ -21,7 +22,7 @@ with open("assets/sidebar.html", "r", encoding="UTF-8") as sidebar_file:
     sidebar_html = sidebar_file.read().replace("{VERSION}", VERSION)
 
 with st.sidebar:
-    st.components.v1.html(sidebar_html, height=243)
+    st_html(sidebar_html, height=243)
 
     st.html(
         """
