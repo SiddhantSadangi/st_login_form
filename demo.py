@@ -74,9 +74,39 @@ st.write("2. Import")
 st.code("from st_login_form import login_form", language="python")
 st.write("3. Use")
 st.code("client = login_form()", language="python")
-st.info(
-    "💡 Explore the arguments you can pass to `login_form()` in the [source](https://github.com/SiddhantSadangi/st_login_form/blob/main/src/st_login_form/__init__.py)"
-)
+with st.expander("💡 Explore the arguments you can pass to `login_form()`", expanded=False):
+    st.markdown(
+        """
+        | Argument | Datatype | Default |
+        |----------|----------|---------|
+        | title | str | "Authentication" |
+        | user_tablename | str | "users" |
+        | username_col | str | "username" |
+        | password_col | str | "password" |
+        | create_title | str | "Create new account :baby: " |
+        | login_title | str | "Login to existing account :prince: " |
+        | allow_guest | bool | True |
+        | guest_title | str | "Guest login :ninja: " |
+        | create_username_label | str | "Create a unique username" |
+        | create_username_placeholder | str |  |
+        | create_username_help | str |  |
+        | create_password_label | str | "Create a password" |
+        | create_password_placeholder | str |  |
+        | create_password_help | str | "⚠️ Password will be stored as plain text. Do not reuse from other websites. Password cannot be recovered." |
+        | create_submit_label | str | "Create account" |
+        | create_success_message | str | "Account created :tada:" |
+        | login_username_label | str | "Enter your unique username" |
+        | login_username_placeholder | str |  |
+        | login_username_help | str |  |
+        | login_password_label | str | "Enter your password" |
+        | login_password_placeholder | str |  |
+        | login_password_help | str |  |
+        | login_submit_label | str | "Login" |
+        | login_success_message | str | "Login succeeded :tada:" |
+        | login_error_message | str | "Wrong username/password :x: " |
+        | guest_submit_label | str | "Guest login" |
+        """
+    )
 st.write(
     "`login_form()` creates the below form and returns the `Supabase.client` instance that can then be used to perform downstream supabase operations"
 )
