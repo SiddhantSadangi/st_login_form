@@ -62,10 +62,10 @@ with st.sidebar:
     )
 
 # ---------- MAIN PAGE ----------
-st.title("🔐 [`st-login-form`](https://github.com/SiddhantSadangi/st_login_form) demo app")
+st.title("🔐 st-login-form demo")
 
 st.write(
-    "This app shows how you can use the `st-login-form` component to create user-login forms for Streamlit apps."
+    "This app shows how you can use [`st-login-form`](https://github.com/SiddhantSadangi/st_login_form) to create Supabase connected user-login forms for Streamlit apps."
 )
 
 st.write("1. Install")
