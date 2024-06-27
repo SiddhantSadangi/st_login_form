@@ -7,7 +7,7 @@ assignees: SiddhantSadangi
 
 ---
 
-[ ] I am using the latest version of `st_login_form`
+- [ ] I am using the latest version of `st_login_form`
 
 **Describe the bug**
 A clear and concise description of what the bug is.
