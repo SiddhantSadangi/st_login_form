@@ -1,7 +1,7 @@
 import streamlit as st
 from supabase import Client, create_client
 
-__version__ = "0.2.3"
+__version__ = "0.3.0"
 
 
 @st.cache_resource
@@ -23,6 +23,7 @@ def login_success(message: str, username: str) -> None:
 
 # Create the python function that will be called
 def login_form(
+    *,
     title: str = "Authentication",
     user_tablename: str = "users",
     username_col: str = "username",
@@ -30,6 +31,7 @@ def login_form(
     create_title: str = "Create new account :baby: ",
     login_title: str = "Login to existing account :prince: ",
     allow_guest: bool = True,
+    allow_create: bool = True,
     guest_title: str = "Guest login :ninja: ",
     create_username_label: str = "Create a unique username",
     create_username_placeholder: str = None,
@@ -72,53 +74,59 @@ def login_form(
 
     with st.expander(title, expanded=not st.session_state["authenticated"]):
         if allow_guest:
-            create_tab, login_tab, guest_tab = st.tabs(
-                [
-                    create_title,
-                    login_title,
-                    guest_title,
-                ]
-            )
-        else:
+            if allow_create:
+                create_tab, login_tab, guest_tab = st.tabs(
+                    [
+                        create_title,
+                        login_title,
+                        guest_title,
+                    ]
+                )
+            else:
+                login_tab, guest_tab = st.tabs([login_title, guest_title])
+        elif allow_create:
             create_tab, login_tab = st.tabs(
                 [
                     create_title,
                     login_title,
                 ]
             )
+        else:
+            login_tab = st.container()
 
         # Create new account
-        with create_tab:
-            with st.form(key="create"):
-                username = st.text_input(
-                    label=create_username_label,
-                    placeholder=create_username_placeholder,
-                    help=create_username_help,
-                    disabled=st.session_state["authenticated"],
-                )
+        if allow_create:
+            with create_tab:
+                with st.form(key="create"):
+                    username = st.text_input(
+                        label=create_username_label,
+                        placeholder=create_username_placeholder,
+                        help=create_username_help,
+                        disabled=st.session_state["authenticated"],
+                    )
 
-                password = st.text_input(
-                    label=create_password_label,
-                    placeholder=create_password_placeholder,
-                    help=create_password_help,
-                    type="password",
-                    disabled=st.session_state["authenticated"],
-                )
+                    password = st.text_input(
+                        label=create_password_label,
+                        placeholder=create_password_placeholder,
+                        help=create_password_help,
+                        type="password",
+                        disabled=st.session_state["authenticated"],
+                    )
 
-                if st.form_submit_button(
-                    label=create_submit_label,
-                    type="primary",
-                    disabled=st.session_state["authenticated"],
-                ):
-                    try:
-                        client.table(user_tablename).insert(
-                            {username_col: username, password_col: password}
-                        ).execute()
-                    except Exception as e:
-                        st.error(e.message)
-                        st.session_state["authenticated"] = False
-                    else:
-                        login_success(create_success_message, username)
+                    if st.form_submit_button(
+                        label=create_submit_label,
+                        type="primary",
+                        disabled=st.session_state["authenticated"],
+                    ):
+                        try:
+                            client.table(user_tablename).insert(
+                                {username_col: username, password_col: password}
+                            ).execute()
+                        except Exception as e:
+                            st.error(e.message)
+                            st.session_state["authenticated"] = False
+                        else:
+                            login_success(create_success_message, username)
 
         # Login to existing account
         with login_tab:
