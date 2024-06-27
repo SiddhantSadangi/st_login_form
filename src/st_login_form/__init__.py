@@ -1,7 +1,7 @@
 import streamlit as st
 from supabase import Client, create_client
 
-__version__ = "0.2.3"
+__version__ = "0.3.0"
 
 
 @st.cache_resource
@@ -23,6 +23,7 @@ def login_success(message: str, username: str) -> None:
 
 # Create the python function that will be called
 def login_form(
+    *,
     title: str = "Authentication",
     user_tablename: str = "users",
     username_col: str = "username",
