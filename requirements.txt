@@ -2,3 +2,4 @@ st-social-media-links
 st_login_form
 streamlit
 supabase
+bcrypt

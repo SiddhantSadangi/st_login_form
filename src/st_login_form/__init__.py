@@ -1,5 +1,6 @@
 import streamlit as st
 from supabase import Client, create_client
+import bcrypt
 
 __version__ = "0.2.3"
 
@@ -19,6 +20,50 @@ def login_success(message: str, username: str) -> None:
     st.success(message)
     st.session_state["authenticated"] = True
     st.session_state["username"] = username
+
+
+def generate_pwd_hash(password: str):
+    """Generates a hashed version of the provided password using bcrypt."""
+    # Check if the password is already hashed; if so, return it directly
+    if password.startswith("$2b$"):
+        return password
+    pwd_bytes = password.encode("utf-8")
+    salt = bcrypt.gensalt()
+    hashed_pwd = bcrypt.hashpw(password=pwd_bytes, salt=salt)
+    string_pwd = hashed_pwd.decode("utf8")
+    return string_pwd
+
+
+def verify_password(plain_pwd, hashed_pwd):
+    """Verifies if a plaintext password matches a hashed one using bcrypt."""
+    # Encode passwords to bytes since bcrypt requires byte inputs for comparison
+    pwd_byte_enc = plain_pwd.encode("utf-8")
+    hashed_pwd_enc = hashed_pwd.encode("utf-8")
+    return bcrypt.checkpw(pwd_byte_enc, hashed_pwd_enc)
+
+
+def hash_current_passwords(
+    user_tablename: str = "users",
+    username_col: str = "username",
+    password_col: str = "password",
+):
+    """Hashes all current plaintext passwords stored in a database table (in-place)."""
+    # Initialize database connection
+    client = init_connection()
+    # Select usernames and passwords from the specified table
+    user_pass_dicts = (
+        client.table(user_tablename)
+        .select(f"{username_col}, {password_col}")
+        .execute()
+        .data
+    )
+
+    # Iterate over each username-password pair, re-hash the password, and update the table
+    for pair in user_pass_dicts:
+        pair["password"] = generate_pwd_hash(pair["password"])
+        client.table(user_tablename).update({password_col: pair["password"]}).match(
+            {username_col: pair["username"]}
+        ).execute()
 
 
 # Create the python function that will be called
@@ -111,7 +156,7 @@ def login_form(
                         type="password",
                         disabled=st.session_state["authenticated"],
                     )
-
+                    hashed_password = generate_pwd_hash(password)
                     if st.form_submit_button(
                         label=create_submit_label,
                         type="primary",
@@ -119,7 +164,7 @@ def login_form(
                     ):
                         try:
                             client.table(user_tablename).insert(
-                                {username_col: username, password_col: password}
+                                {username_col: username, password_col: hashed_password}
                             ).execute()
                         except Exception as e:
                             st.error(e.message)
@@ -154,12 +199,15 @@ def login_form(
                         client.table(user_tablename)
                         .select(f"{username_col}, {password_col}")
                         .eq(username_col, username)
-                        .eq(password_col, password)
                         .execute()
                     )
-
                     if len(response.data) > 0:
-                        login_success(login_success_message, username)
+                        hashed_password = response.data[0]["password"]
+                        if verify_password(password, hashed_password):
+                            login_success(login_success_message, username)
+                        else:
+                            st.error(login_error_message)
+                            st.session_state["authenticated"] = False
                     else:
                         st.error(login_error_message)
                         st.session_state["authenticated"] = False
