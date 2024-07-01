@@ -86,6 +86,7 @@ with st.expander("💡 Explore the arguments you can pass to `login_form()`", ex
         | create_title | str | "Create new account :baby: " |
         | login_title | str | "Login to existing account :prince: " |
         | allow_guest | bool | True |
+        | allow_create | bool | True |
         | guest_title | str | "Guest login :ninja: " |
         | create_username_label | str | "Create a unique username" |
         | create_username_placeholder | str |  |

@@ -2,7 +2,7 @@ import streamlit as st
 from supabase import Client, create_client
 import bcrypt
 
-__version__ = "0.2.3"
+__version__ = "0.3.1"
 
 
 @st.cache_resource
@@ -68,6 +68,7 @@ def hash_current_passwords(
 
 # Create the python function that will be called
 def login_form(
+    *,
     title: str = "Authentication",
     user_tablename: str = "users",
     username_col: str = "username",
