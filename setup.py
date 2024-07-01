@@ -43,5 +43,5 @@ setuptools.setup(
     ],
     keywords=["streamlit", "login"],
     python_requires=">=3.8",
-    install_requires=["streamlit>=1.2", "jinja2", "supabase>=2.4.5"],
+    install_requires=["streamlit>=1.2", "jinja2", "supabase>=2.4.5", "bccrypt"],
 )
