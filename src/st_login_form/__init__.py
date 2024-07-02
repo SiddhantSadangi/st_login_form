@@ -1,6 +1,7 @@
 import streamlit as st
 from supabase import Client, create_client
-import bcrypt
+import argon2
+
 
 __version__ = "0.3.1"
 
@@ -22,48 +23,51 @@ def login_success(message: str, username: str) -> None:
     st.session_state["username"] = username
 
 
-def generate_pwd_hash(password: str):
-    """Generates a hashed version of the provided password using bcrypt."""
-    # Check if the password is already hashed; if so, return it directly
-    if password.startswith("$2b$"):
-        return password
-    pwd_bytes = password.encode("utf-8")
-    salt = bcrypt.gensalt()
-    hashed_pwd = bcrypt.hashpw(password=pwd_bytes, salt=salt)
-    string_pwd = hashed_pwd.decode("utf8")
-    return string_pwd
+# An argon2 version of my previous functions that used bcrypt
+class Authenticator(argon2.PasswordHasher):
+    """A class derived from `argon2.PasswordHasher` to provide functionality for the authentication process"""
 
+    def generate_pwd_hash(self, password: str):
+        """Generates a hashed version of the provided password using `argon2`."""
+        # Check if the password is already hashed; if so, return it directly
+        if password.startswith("$argon2id$"):
+            return password
+        return self.hash(password)
 
-def verify_password(plain_pwd, hashed_pwd):
-    """Verifies if a plaintext password matches a hashed one using bcrypt."""
-    # Encode passwords to bytes since bcrypt requires byte inputs for comparison
-    pwd_byte_enc = plain_pwd.encode("utf-8")
-    hashed_pwd_enc = hashed_pwd.encode("utf-8")
-    return bcrypt.checkpw(pwd_byte_enc, hashed_pwd_enc)
+    def verify_password(self, hashed_password, plain_password):
+        """Verifies if a plaintext password matches a hashed one using `argon2`."""
+        try:
+            correct = self.verify(hashed_password, plain_password)
+            if correct:
+                return True
+        # argon2 raieses an exception if verification falls by default, it would make bugs in streamlit apps.
+        # for that reason, I'm handling the exception to return False, so runtime would not be interrupted
+        except argon2.exceptions.VerificationError:
+            return False
 
+    def hash_current_passwords(
+        self,
+        user_tablename: str = "users",
+        username_col: str = "username",
+        password_col: str = "password",
+    ):
+        """Hashes all current plaintext passwords stored in a database table (in-place)."""
+        # Initialize database connection
+        client = init_connection()
+        # Select usernames and passwords from the specified table
+        user_pass_dicts = (
+            client.table(user_tablename)
+            .select(f"{username_col}, {password_col}")
+            .execute()
+            .data
+        )
 
-def hash_current_passwords(
-    user_tablename: str = "users",
-    username_col: str = "username",
-    password_col: str = "password",
-):
-    """Hashes all current plaintext passwords stored in a database table (in-place)."""
-    # Initialize database connection
-    client = init_connection()
-    # Select usernames and passwords from the specified table
-    user_pass_dicts = (
-        client.table(user_tablename)
-        .select(f"{username_col}, {password_col}")
-        .execute()
-        .data
-    )
-
-    # Iterate over each username-password pair, re-hash the password, and update the table
-    for pair in user_pass_dicts:
-        pair["password"] = generate_pwd_hash(pair["password"])
-        client.table(user_tablename).update({password_col: pair["password"]}).match(
-            {username_col: pair["username"]}
-        ).execute()
+        # Iterate over each username-password pair, re-hash the password, and update the table
+        for pair in user_pass_dicts:
+            pair["password"] = self.generate_pwd_hash(pair["password"])
+            client.table(user_tablename).update({password_col: pair["password"]}).match(
+                {username_col: pair["username"]}
+            ).execute()
 
 
 # Create the python function that will be called
@@ -109,6 +113,13 @@ def login_form(
 
     # Initialize supabase connection
     client = init_connection()
+    auth = Authenticator()
+
+    def rehash_pwd_in_db(password, username):
+        """A procedure to rehash given password in the db if necessary."""
+        client.table(user_tablename).update(
+            {password_col: auth.generate_pwd_hash(password)}
+        ).match({username_col: username}).execute()
 
     # User Authentication
     if "authenticated" not in st.session_state:
@@ -157,7 +168,7 @@ def login_form(
                         type="password",
                         disabled=st.session_state["authenticated"],
                     )
-                    hashed_password = generate_pwd_hash(password)
+                    hashed_password = auth.generate_pwd_hash(password)
                     if st.form_submit_button(
                         label=create_submit_label,
                         type="primary",
@@ -204,8 +215,11 @@ def login_form(
                     )
                     if len(response.data) > 0:
                         hashed_password = response.data[0]["password"]
-                        if verify_password(password, hashed_password):
+                        if auth.verify_password(hashed_password, password):
                             login_success(login_success_message, username)
+                            # This step is recommended by the argon2-cffi documentation
+                            if auth.check_needs_rehash(hashed_password):
+                                rehash_pwd_in_db(password, username)
                         else:
                             st.error(login_error_message)
                             st.session_state["authenticated"] = False
