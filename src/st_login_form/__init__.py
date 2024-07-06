@@ -1,9 +1,9 @@
-import streamlit as st
-from supabase import Client, create_client
 import argon2
+import streamlit as st
+from stqdm import stqdm
+from supabase import Client, create_client
 
-
-__version__ = "0.3.1"
+__version__ = "1.0.0"
 
 
 @st.cache_resource
@@ -30,44 +30,15 @@ class Authenticator(argon2.PasswordHasher):
     def generate_pwd_hash(self, password: str):
         """Generates a hashed version of the provided password using `argon2`."""
         # Check if the password is already hashed; if so, return it directly
-        if password.startswith("$argon2id$"):
-            return password
-        return self.hash(password)
+        return password if password.startswith("$argon2id$") else self.hash(password)
 
     def verify_password(self, hashed_password, plain_password):
         """Verifies if a plaintext password matches a hashed one using `argon2`."""
         try:
-            correct = self.verify(hashed_password, plain_password)
-            if correct:
+            if self.verify(hashed_password, plain_password):
                 return True
-        # argon2 raieses an exception if verification falls by default, it would make bugs in streamlit apps.
-        # for that reason, I'm handling the exception to return False, so runtime would not be interrupted
         except argon2.exceptions.VerificationError:
             return False
-
-    def hash_current_passwords(
-        self,
-        user_tablename: str = "users",
-        username_col: str = "username",
-        password_col: str = "password",
-    ):
-        """Hashes all current plaintext passwords stored in a database table (in-place)."""
-        # Initialize database connection
-        client = init_connection()
-        # Select usernames and passwords from the specified table
-        user_pass_dicts = (
-            client.table(user_tablename)
-            .select(f"{username_col}, {password_col}")
-            .execute()
-            .data
-        )
-
-        # Iterate over each username-password pair, re-hash the password, and update the table
-        for pair in user_pass_dicts:
-            pair["password"] = self.generate_pwd_hash(pair["password"])
-            client.table(user_tablename).update({password_col: pair["password"]}).match(
-                {username_col: pair["username"]}
-            ).execute()
 
 
 # Create the python function that will be called
@@ -89,7 +60,7 @@ def login_form(
     create_password_placeholder: str = None,
     create_password_help: str = "⚠️ Password will be stored as plain text. Do not reuse from other websites. Password cannot be recovered.",
     create_submit_label: str = "Create account",
-    create_success_message: str = "Account created :tada:",
+    create_success_message: str = "Account created and logged-in :tada:",
     login_username_label: str = "Enter your unique username",
     login_username_placeholder: str = None,
     login_username_help: str = None,
@@ -115,11 +86,14 @@ def login_form(
     client = init_connection()
     auth = Authenticator()
 
-    def rehash_pwd_in_db(password, username):
+    def rehash_pwd_in_db(password, username) -> str:
         """A procedure to rehash given password in the db if necessary."""
-        client.table(user_tablename).update(
-            {password_col: auth.generate_pwd_hash(password)}
-        ).match({username_col: username}).execute()
+        hashed_password = auth.generate_pwd_hash(password)
+        client.table(user_tablename).update({password_col: hashed_password}).match(
+            {username_col: username}
+        ).execute()
+
+        return hashed_password
 
     # User Authentication
     if "authenticated" not in st.session_state:
@@ -214,15 +188,22 @@ def login_form(
                         .execute()
                     )
                     if len(response.data) > 0:
-                        hashed_password = response.data[0]["password"]
-                        if auth.verify_password(hashed_password, password):
+                        db_password = response.data[0]["password"]
+
+                        if not db_password.startswith("$argon2id$"):
+                            # Hash plaintext password and update the db
+                            db_password = rehash_pwd_in_db(db_password, username)
+
+                        if auth.verify_password(db_password, password):
+                            # Verify hashed password
                             login_success(login_success_message, username)
                             # This step is recommended by the argon2-cffi documentation
-                            if auth.check_needs_rehash(hashed_password):
-                                rehash_pwd_in_db(password, username)
+                            if auth.check_needs_rehash(db_password):
+                                _ = rehash_pwd_in_db(password, username)
                         else:
                             st.error(login_error_message)
                             st.session_state["authenticated"] = False
+
                     else:
                         st.error(login_error_message)
                         st.session_state["authenticated"] = False
@@ -240,13 +221,38 @@ def login_form(
         return client
 
 
-def main() -> None:
-    login_form(
-        create_username_placeholder="Username will be visible in the global leaderboard.",
-        create_password_placeholder="⚠️ Password will be stored as plain text. You won't be able to recover it if you forget.",
-        guest_submit_label="Play as a guest ⚠️ Scores won't be saved",
+def hash_current_passwords(
+    user_tablename: str = "users",
+    username_col: str = "username",
+    password_col: str = "password",
+) -> None:
+    """Hashes all current plaintext passwords stored in a database table (in-place)."""
+
+    # Initialize database connection
+    client = init_connection()
+    auth = Authenticator()
+
+    # Select usernames and plaintext passwords from the specified table
+    user_pass_dicts = (
+        client.table(user_tablename)
+        .select(f"{username_col}, {password_col}")
+        .not_.like(password_col, "$argon2id$%")
+        .execute()
+        .data
     )
+
+    if len(user_pass_dicts) > 0:
+        st.warning(f"Hashing {len(user_pass_dicts)} plaintext passwords.")
+        # Iterate over each username-password pair, re-hash passwords, and update the table
+        for pair in stqdm(user_pass_dicts):
+            pair["password"] = auth.generate_pwd_hash(pair["password"])
+            client.table(user_tablename).update({password_col: pair["password"]}).match(
+                {username_col: pair["username"]}
+            ).execute()
+        st.success("All passwords hashed successfully.", icon="🔒")
+    else:
+        st.success("All passwords are already hashed.", icon="🔒")
 
 
 if __name__ == "__main__":
-    main()
+    login_form()
