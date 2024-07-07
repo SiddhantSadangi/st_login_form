@@ -39,9 +39,16 @@ setuptools.setup(
         "Operating System :: OS Independent",
         "Programming Language :: Python",
         "Topic :: Software Development :: Libraries :: Python Modules",
+        "Topic :: Security",
         "Topic :: Software Development :: User Interfaces",
     ],
     keywords=["streamlit", "login"],
     python_requires=">=3.8",
-    install_requires=["streamlit>=1.2", "jinja2", "supabase>=2.4.5"],
+    install_requires=[
+        "streamlit>=1.2",
+        "jinja2",
+        "supabase>=2.4.5",
+        "argon2-cffi",
+        "stqdm",
+    ],
 )

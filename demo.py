@@ -1,132 +1,145 @@
-import streamlit as st
-from st_social_media_links import SocialMediaIcons
-from streamlit.components.v1 import html as st_html
+try:
+    import traceback
 
-import st_login_form
+    import streamlit as st
+    from st_social_media_links import SocialMediaIcons
+    from streamlit.components.v1 import html as st_html
 
-VERSION = st_login_form.__version__
+    import st_login_form
 
-st.set_page_config(
-    page_title="Streamlit Login Form",
-    page_icon="🔐",
-    menu_items={
-        "About": f"Streamlit Login Form 🔐 v{VERSION}  "
-        f"\nApp contact: [Siddhant Sadangi](mailto:siddhant.sadangi@gmail.com)",
-        "Report a Bug": "https://github.com/SiddhantSadangi/st-login-form/issues/new",
-        "Get help": None,
-    },
-)
+    VERSION = st_login_form.__version__
 
-# ---------- SIDEBAR ----------
-with open("assets/sidebar.html", "r", encoding="UTF-8") as sidebar_file:
-    sidebar_html = sidebar_file.read().replace("{VERSION}", VERSION)
-
-with st.sidebar:
-    st_html(sidebar_html, height=243)
-
-    st.html(
-        """
-        <div style="text-align:center; font-size:14px; color:lightgrey">
-            <hr style="margin-bottom: 6%; margin-top: 0%;">
-            Share the ❤️ on social media
-        </div>"""
+    st.set_page_config(
+        page_title="Streamlit Login Form",
+        page_icon="🔐",
+        menu_items={
+            "About": f"Streamlit Login Form 🔐 v{VERSION}  "
+            f"\nApp contact: [Siddhant Sadangi](mailto:siddhant.sadangi@gmail.com)",
+            "Report a Bug": "https://github.com/SiddhantSadangi/st-login-form/issues/new",
+            "Get help": None,
+        },
     )
 
-    social_media_links = [
-        "https://www.facebook.com/sharer/sharer.php?kid_directed_site=0&sdk=joey&u=https%3A%2F%2Fst-lgn-form.streamlit.app%2F&display=popup&ref=plugin&src=share_button",
-        "https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fst-lgn-form.streamlit.app%2F",
-        "https://x.com/intent/tweet?original_referer=http%3A%2F%2Flocalhost%3A8501%2F&ref_src=twsrc%5Etfw%7Ctwcamp%5Ebuttonembed%7Ctwterm%5Eshare%7Ctwgr%5E&text=Check%20out%20this%20Streamlit%20login%20demo%20app%20%F0%9F%8E%88&url=https%3A%2F%2Fst-lgn-form.streamlit.app%2F",
-    ]
+    # ---------- SIDEBAR ----------
+    with open("assets/sidebar.html", "r", encoding="UTF-8") as sidebar_file:
+        sidebar_html = sidebar_file.read().replace("{VERSION}", VERSION)
 
-    social_media_icons = SocialMediaIcons(
-        social_media_links, colors=["lightgray"] * len(social_media_links)
+    with st.sidebar:
+        st_html(sidebar_html, height=243)
+
+        st.html(
+            """
+            <div style="text-align:center; font-size:14px; color:lightgrey">
+                <hr style="margin-bottom: 6%; margin-top: 0%;">
+                Share the ❤️ on social media
+            </div>"""
+        )
+
+        social_media_links = [
+            "https://www.facebook.com/sharer/sharer.php?kid_directed_site=0&sdk=joey&u=https%3A%2F%2Fst-lgn-form.streamlit.app%2F&display=popup&ref=plugin&src=share_button",
+            "https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fst-lgn-form.streamlit.app%2F",
+            "https://x.com/intent/tweet?original_referer=http%3A%2F%2Flocalhost%3A8501%2F&ref_src=twsrc%5Etfw%7Ctwcamp%5Ebuttonembed%7Ctwterm%5Eshare%7Ctwgr%5E&text=Check%20out%20this%20Streamlit%20login%20demo%20app%20%F0%9F%8E%88&url=https%3A%2F%2Fst-lgn-form.streamlit.app%2F",
+        ]
+
+        social_media_icons = SocialMediaIcons(
+            social_media_links, colors=["lightgray"] * len(social_media_links)
+        )
+
+        social_media_icons.render(sidebar=True)
+
+        st.html(
+            """
+            <div style="text-align:center; font-size:12px; color:lightgrey">
+                <hr style="margin-bottom: 6%; margin-top: 6%;">
+                <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">
+                    <img alt="Creative Commons License" style="border-width:0"
+                        src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" />
+                </a><br><br>
+                This work is licensed under a <b>Creative Commons
+                    Attribution-NonCommercial-ShareAlike 4.0 International License</b>.<br>
+                You can modify and build upon this work non-commercially. All derivatives should be
+                credited to Siddhant Sadangi and
+                be licenced under the same terms.
+            </div>
+        """
+        )
+
+    # ---------- MAIN PAGE ----------
+    st.title("🔐 st-login-form demo")
+
+    st.write(
+        "This app shows how you can use [`st-login-form`](https://github.com/SiddhantSadangi/st_login_form) to create Supabase connected user-login forms for Streamlit apps."
     )
 
-    social_media_icons.render(sidebar=True)
-
-    st.html(
-        """
-        <div style="text-align:center; font-size:12px; color:lightgrey">
-            <hr style="margin-bottom: 6%; margin-top: 6%;">
-            <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">
-                <img alt="Creative Commons License" style="border-width:0"
-                    src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" />
-            </a><br><br>
-            This work is licensed under a <b>Creative Commons
-                Attribution-NonCommercial-ShareAlike 4.0 International License</b>.<br>
-            You can modify and build upon this work non-commercially. All derivatives should be
-            credited to Siddhant Sadangi and
-            be licenced under the same terms.
-        </div>
-    """
+    st.write("1. Install")
+    st.code("pip install st-login-form", language="bash")
+    st.write("2. Import")
+    st.code("from st_login_form import login_form", language="python")
+    st.write("3. Use")
+    st.code("client = login_form()", language="python")
+    with st.expander("💡 `login_form()` API reference", expanded=False):
+        st.markdown(
+            """
+            | Argument | Datatype | Default |
+            |----------|----------|---------|
+            | title | `str` | Authentication |
+            | user_tablename | `str` | users |
+            | username_col | `str` | username |
+            | password_col | `str` | password |
+            | create_title | `str` | Create new account :baby:  |
+            | login_title | `str` | Login to existing account :prince:  |
+            | allow_guest | `bool` | `True` |
+            | allow_create | `bool` | `True` |
+            | guest_title | `str` | Guest login :ninja:  |
+            | create_username_label | `str` | Create a unique username |
+            | create_username_placeholder | `str` |  |
+            | create_username_help | `str` |  |
+            | create_password_label | `str` | Create a password |
+            | create_password_placeholder | `str` |  |
+            | create_password_help | `str` | Password cannot be recovered if lost |
+            | create_submit_label | `str` | Create account |
+            | create_success_message | `str` | Account created and logged-in :tada: |
+            | login_username_label | `str` | Enter your unique username |
+            | login_username_placeholder | `str` |  |
+            | login_username_help | `str` |  |
+            | login_password_label | `str` | Enter your password |
+            | login_password_placeholder | `str` |  |
+            | login_password_help | `str` |  |
+            | login_submit_label | `str` | Login |
+            | login_success_message | `str` | Login succeeded :tada: |
+            | login_error_message | `str` | Wrong username/password :x:  |
+            | guest_submit_label | `str` | Guest login |
+            """
+        )
+    st.write(
+        "`login_form()` creates the below form and returns the `Supabase.client` instance that can then be used to perform downstream supabase operations"
     )
 
-# ---------- MAIN PAGE ----------
-st.title("🔐 st-login-form demo")
+    client = st_login_form.login_form(user_tablename="demo_users")
 
-st.write(
-    "This app shows how you can use [`st-login-form`](https://github.com/SiddhantSadangi/st_login_form) to create Supabase connected user-login forms for Streamlit apps."
-)
-
-st.write("1. Install")
-st.code("pip install st-login-form", language="bash")
-st.write("2. Import")
-st.code("from st_login_form import login_form", language="python")
-st.write("3. Use")
-st.code("client = login_form()", language="python")
-with st.expander("💡 Explore the arguments you can pass to `login_form()`", expanded=False):
-    st.markdown(
-        """
-        | Argument | Datatype | Default |
-        |----------|----------|---------|
-        | title | str | "Authentication" |
-        | user_tablename | str | "users" |
-        | username_col | str | "username" |
-        | password_col | str | "password" |
-        | create_title | str | "Create new account :baby: " |
-        | login_title | str | "Login to existing account :prince: " |
-        | allow_guest | bool | True |
-        | allow_create | bool | True |
-        | guest_title | str | "Guest login :ninja: " |
-        | create_username_label | str | "Create a unique username" |
-        | create_username_placeholder | str |  |
-        | create_username_help | str |  |
-        | create_password_label | str | "Create a password" |
-        | create_password_placeholder | str |  |
-        | create_password_help | str | "⚠️ Password will be stored as plain text. Do not reuse from other websites. Password cannot be recovered." |
-        | create_submit_label | str | "Create account" |
-        | create_success_message | str | "Account created :tada:" |
-        | login_username_label | str | "Enter your unique username" |
-        | login_username_placeholder | str |  |
-        | login_username_help | str |  |
-        | login_password_label | str | "Enter your password" |
-        | login_password_placeholder | str |  |
-        | login_password_help | str |  |
-        | login_submit_label | str | "Login" |
-        | login_success_message | str | "Login succeeded :tada:" |
-        | login_error_message | str | "Wrong username/password :x: " |
-        | guest_submit_label | str | "Guest login" |
-        """
+    st.write(
+        "On authentication, `login_form()` sets `st.session_state['authenticated']` to `True`. This also collapses and disables the login form."
     )
-st.write(
-    "`login_form()` creates the below form and returns the `Supabase.client` instance that can then be used to perform downstream supabase operations"
-)
-client = st_login_form.login_form(user_tablename="demo_users")
+    st.write(
+        "`st.session_state['username']` is set to the provided username for a new or existing user, and to `None` for guest login."
+    )
 
-st.write(
-    "On authentication, `login_form()` sets `st.session_state['authenticated']` to `True`. This also collapses and disables the login form."
-)
-st.write(
-    "`st.session_state['username']` is set to the provided username for a new or existing user, and to `None` for guest login."
-)
-
-if st.session_state["authenticated"]:
-    if st.session_state["username"]:
-        st.success(f"Welcome {st.session_state['username']}")
+    if st.session_state["authenticated"]:
+        if st.session_state["username"]:
+            st.success(f"Welcome {st.session_state['username']}")
+        else:
+            st.success("Welcome guest")
     else:
-        st.success("Welcome guest")
-else:
-    st.error("Not authenticated")
+        st.error("Not authenticated")
+except Exception as e:
+    st.error(
+        f"""The app has encountered an error:\n
+`{e}`\n
+Please create an issue [here](https://github.com/SiddhantSadangi/st_login_form/issues/new)
+with the below traceback""",
+        icon="🥺",
+    )
+    st.code(traceback.format_exc())
 
 st.success(
     "[Star the repo](https://github.com/SiddhantSadangi/st_login_form) to show your :heart:",
