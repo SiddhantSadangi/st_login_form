@@ -112,7 +112,7 @@ To bulk-update all existing plaintext passwords in the table, use the `hash_curr
       create_username_help: str = None,
       create_password_label: str = "Create a password",
       create_password_placeholder: str = None,
-      create_password_help: str = "⚠️ Password will be stored as plain text. Do not reuse from other websites. Password cannot be recovered.",
+      create_password_help: str = "Password cannot be recovered if lost",
       create_submit_label: str = "Create account",
       create_success_message: str = "Account created and logged-in :tada:",
       login_username_label: str = "Enter your unique username",
@@ -148,14 +148,14 @@ To bulk-update all existing plaintext passwords in the table, use the `hash_curr
       """Hashes all current plaintext passwords stored in a database table (in-place)."""
   ```
 
-## Get Involved! 🤝
+## :handshake: Get Involved!
 Your feedback and contributions can help shape the future of Streamlit Login Form. If you have ideas or features you'd like to see, let's collaborate!
 
 - **Contribute**: Submit PRs or open issues on GitHub.
 - **Connect**: Have questions or suggestions? Reach out to me on [LinkedIn](https://linkedin.com/in/siddhantsadangi) or [email](mailto:siddhant.sadangi@gmail.com).
 
 
-## Support Streamlit Login Form 💖
+## :sparkling_heart: Support Streamlit Login Form
 Love Streamlit Login Form? Here's how you can show your support:
 
 - **Star**: Give us a star on GitHub and help spread the word!
@@ -167,4 +167,4 @@ Love Streamlit Login Form? Here's how you can show your support:
     </a>
 </p>
 
-Thank you for supporting Streamlit Login Form! 🤗
+Thank you for supporting Streamlit Login Form!

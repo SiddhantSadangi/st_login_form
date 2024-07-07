@@ -96,7 +96,7 @@ try:
             | create_username_help | `str` |  |
             | create_password_label | `str` | Create a password |
             | create_password_placeholder | `str` |  |
-            | create_password_help | `str` | ⚠️ Password cannot be recovered if lost |
+            | create_password_help | `str` | Password cannot be recovered if lost |
             | create_submit_label | `str` | Create account |
             | create_success_message | `str` | Account created and logged-in :tada: |
             | login_username_label | `str` | Enter your unique username |

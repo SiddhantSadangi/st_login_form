@@ -58,7 +58,7 @@ def login_form(
     create_username_help: str = None,
     create_password_label: str = "Create a password",
     create_password_placeholder: str = None,
-    create_password_help: str = "⚠️ Password will be stored as plain text. Do not reuse from other websites. Password cannot be recovered.",
+    create_password_help: str = "Password cannot be recovered if lost",
     create_submit_label: str = "Create account",
     create_success_message: str = "Account created and logged-in :tada:",
     login_username_label: str = "Enter your unique username",
