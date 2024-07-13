@@ -47,7 +47,7 @@ setuptools.setup(
     install_requires=[
         "streamlit>=1.2",
         "jinja2",
-        "supabase>=2.4.5",
+        "st_supabase_connection>=2.0",
         "argon2-cffi",
         "stqdm",
     ],

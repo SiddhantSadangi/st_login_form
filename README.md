@@ -1,5 +1,5 @@
 # :lock: Streamlit Login Form
-[![Downloads](https://static.pepy.tech/personalized-badge/st-login-form?period=total&units=international_system&left_color=black&right_color=brightgreen&left_text=Downloads)](https://pepy.tech/project/st-login-form)
+![PyPI Version](https://img.shields.io/pypi/v/st-login-form.svg) &emsp; [![Downloads](https://static.pepy.tech/personalized-badge/st-login-form?period=total&left_text=Downloads)](https://pepy.tech/project/st-login-form) &emsp; ![License](https://img.shields.io/github/license/SiddhantSadangi/st_login_form.svg) &emsp; ![PRs Welcome](https://img.shields.io/badge/PRs-Welcome-brightgreen.svg)
 
 A Streamlit authentication component that creates a user login form connected to a Supabase DB.
 
@@ -147,6 +147,26 @@ To bulk-update all existing plaintext passwords in the table, use the `hash_curr
   ) -> None:
       """Hashes all current plaintext passwords stored in a database table (in-place)."""
   ```
+
+## :bow: Acknowledgements
+- [Streamlit](https://streamlit.io) for the amazing Streamlit framework and promoting this library
+- [Ahmed Ramadan](https://www.linkedin.com/in/theahmedrmdan/) for implementing password hashing
+- Everyone who has shared feedback to improve this library!
+
+## :motorway:  Project Roadmap
+Here are some features that are planned for future releases across the library and demo app. If you want to contribute to any of these features, feel free to open a PR!
+
+### Library Features
+- [ ] Add logout option  
+ [ ] Add password requirements for minimum length and character types
+- [ ] Add password recovery option
+- [ ] Support additional databases:
+  - [ ] MySQL
+
+### Demo App Features
+- [ ] Allow users to customise demo login form  
+- [ ] Add code preview for the rendered login form  
+
 
 ## :handshake: Get Involved!
 Your feedback and contributions can help shape the future of Streamlit Login Form. If you have ideas or features you'd like to see, let's collaborate!
