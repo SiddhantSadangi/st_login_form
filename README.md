@@ -158,7 +158,7 @@ Here are some features that are planned for future releases across the library a
 
 ### Library Features
 - [ ] Add logout option  
-- [ ] Add password requirements for minimum length or characters
+ [ ] Add password requirements for minimum length and character types
 - [ ] Add password recovery option
 - [ ] Support additional databases:
   - [ ] MySQL
