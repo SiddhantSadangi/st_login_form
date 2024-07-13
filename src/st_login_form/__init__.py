@@ -7,13 +7,6 @@ from supabase import Client
 __version__ = "1.0.1"
 
 
-def _init_connection():
-    return st.connection(
-        name="supabase",
-        type=SupabaseConnection,
-    )
-
-
 def login_success(message: str, username: str) -> None:
     st.success(message)
     st.session_state["authenticated"] = True
@@ -80,7 +73,7 @@ def login_form(
     """
 
     # Initialize the Supabase connection
-    client = _init_connection()
+    client = st.connection(name="supabase", type=SupabaseConnection)
     auth = Authenticator()
 
     def rehash_pwd_in_db(password, username) -> str:
@@ -229,7 +222,7 @@ def hash_current_passwords(
     from st_supabase_connection import execute_query
 
     # Initialize the Supabase connection
-    client = _init_connection()
+    client = st.connection(name="supabase", type=SupabaseConnection)
     auth = Authenticator()
 
     # Select usernames and plaintext passwords from the specified table
