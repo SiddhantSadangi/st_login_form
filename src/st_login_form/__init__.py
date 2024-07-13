@@ -1,20 +1,17 @@
 import argon2
 import streamlit as st
+from st_supabase_connection import SupabaseConnection
 from stqdm import stqdm
-from supabase import Client, create_client
+from supabase import Client
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 
 
-@st.cache_resource
-def init_connection() -> Client:
-    try:
-        return create_client(
-            st.secrets["connections"]["supabase"]["SUPABASE_URL"],
-            st.secrets["connections"]["supabase"]["SUPABASE_KEY"],
-        )
-    except KeyError:
-        return create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
+def _init_connection():
+    return st.connection(
+        name="supabase",
+        type=SupabaseConnection,
+    )
 
 
 def login_success(message: str, username: str) -> None:
@@ -82,8 +79,8 @@ def login_form(
     Supabase client instance
     """
 
-    # Initialize supabase connection
-    client = init_connection()
+    # Initialize the Supabase connection
+    client = _init_connection()
     auth = Authenticator()
 
     def rehash_pwd_in_db(password, username) -> str:
@@ -187,6 +184,7 @@ def login_form(
                         .eq(username_col, username)
                         .execute()
                     )
+
                     if len(response.data) > 0:
                         db_password = response.data[0]["password"]
 
@@ -228,18 +226,18 @@ def hash_current_passwords(
 ) -> None:
     """Hashes all current plaintext passwords stored in a database table (in-place)."""
 
-    # Initialize database connection
-    client = init_connection()
+    from st_supabase_connection import execute_query
+
+    # Initialize the Supabase connection
+    client = _init_connection()
     auth = Authenticator()
 
     # Select usernames and plaintext passwords from the specified table
-    user_pass_dicts = (
+    user_pass_dicts = execute_query(
         client.table(user_tablename)
         .select(f"{username_col}, {password_col}")
         .not_.like(password_col, "$argon2id$%")
-        .execute()
-        .data
-    )
+    ).data
 
     if len(user_pass_dicts) > 0:
         st.warning(f"Hashing {len(user_pass_dicts)} plaintext passwords.")
