@@ -1,5 +1,3 @@
-import re
-
 import argon2
 import streamlit as st
 from st_supabase_connection import SupabaseConnection
@@ -8,17 +6,17 @@ from supabase import Client
 
 __version__ = "1.1.0"
 
-password_pattern = re.compile(
-    r"^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&_^#-])[A-Za-z\d@$!%*?&_^#-]{8,}$"
-)
 
-
-def validate_password(password):
-    if not password_pattern.match(password):
-        st.error(
-            "Password must contain at least 8 characters, including one uppercase letter, one lowercase letter, one number, and one special character (`@$!%*?&_^#-`)."
-        )
-        st.stop()
+def validate_password(
+    password: str, min_length: int = 8, special_chars: str = "@$!%*?&_^#- "
+) -> bool:
+    required_chars = [
+        lambda s: any(x.isupper() for x in s),
+        lambda s: any(x.islower() for x in s),
+        lambda s: any(x.isdigit() for x in s),
+        lambda s: any(x in special_chars for x in s),
+    ]
+    return len(password) >= min_length and all(check(password) for check in required_chars)
 
 
 def login_success(message: str, username: str) -> None:
@@ -75,6 +73,7 @@ def login_form(
     login_submit_label: str = "Login",
     login_success_message: str = "Login succeeded :tada:",
     login_error_message: str = "Wrong username/password :x: ",
+    password_constrain_check_fail_message: str = "Password must contain at least 8 characters, including one uppercase letter, one lowercase letter, one number, and one special character (`@$!%*?&_^#- `).",
     guest_submit_label: str = "Guest login",
 ) -> Client:
     """Creates a user login form in Streamlit apps.
@@ -88,7 +87,7 @@ def login_form(
         user_tablename (str): The name of the table in the database that stores user information. Default is "users".
         username_col (str): The name of the column in the user table that stores usernames. Default is "username".
         password_col (str): The name of the column in the user table that stores passwords. Default is "password".
-        constrain_password (bool): Whether to enforce password constraints (at least 8 characters, including one uppercase letter, one lowercase letter, one number, and one special character (`@$!%*?&_^#-`)). Default is True.
+        constrain_password (bool): Whether to enforce password constraints (at least 8 characters, including one uppercase letter, one lowercase letter, one number, and one special character (`@$!%*?&_^#- `). Default is True.
         create_title (str): The title of the create new account tab. Default is "Create new account :baby: ".
         login_title (str): The title of the login to existing account tab. Default is "Login to existing account :prince: ".
         allow_guest (bool): Whether to allow guest login. Default is True.
@@ -111,6 +110,7 @@ def login_form(
         login_submit_label (str): The label for the login submit button. Default is "Login".
         login_success_message (str): The success message displayed after a successful login. Default is "Login succeeded :tada:".
         login_error_message (str): The error message displayed when the username or password is incorrect. Default is "Wrong username/password :x: ".
+        password_constrain_check_fail_message (str): The error message displayed when the password does not meet the constraints. Default is "Password must contain at least 8 characters, including one uppercase letter, one lowercase letter, one number, and one special character (`@$!%*?&_^#- `).".
         guest_submit_label (str): The label for the guest login button. Default is "Guest login".
 
     Returns:
@@ -183,8 +183,9 @@ def login_form(
                         type="primary",
                         disabled=st.session_state["authenticated"],
                     ):
-                        if constrain_password:
-                            validate_password(password)
+                        if constrain_password and not validate_password(password):
+                            st.error(password_constrain_check_fail_message)
+                            st.stop()
 
                         try:
                             client.table(user_tablename).insert(
