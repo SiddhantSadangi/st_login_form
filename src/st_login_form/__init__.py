@@ -73,7 +73,7 @@ def login_form(
     login_submit_label: str = "Login",
     login_success_message: str = "Login succeeded :tada:",
     login_error_message: str = "Wrong username/password :x: ",
-    password_constrain_check_fail_message: str = "Password must contain at least 8 characters, including one uppercase letter, one lowercase letter, one number, and one special character (`@$!%*?&_^#- `).",
+    password_constraint_check_fail_message: str = "Password must contain at least 8 characters, including one uppercase letter, one lowercase letter, one number, and one special character (`@$!%*?&_^#- `).",
     guest_submit_label: str = "Guest login",
 ) -> Client:
     """Creates a user login form in Streamlit apps.
@@ -110,7 +110,7 @@ def login_form(
         login_submit_label (str): The label for the login submit button. Default is "Login".
         login_success_message (str): The success message displayed after a successful login. Default is "Login succeeded :tada:".
         login_error_message (str): The error message displayed when the username or password is incorrect. Default is "Wrong username/password :x: ".
-        password_constrain_check_fail_message (str): The error message displayed when the password does not meet the constraints. Default is "Password must contain at least 8 characters, including one uppercase letter, one lowercase letter, one number, and one special character (`@$!%*?&_^#- `).".
+        password_constraint_check_fail_message (str): The error message displayed when the password does not meet the constraints. Default is "Password must contain at least 8 characters, including one uppercase letter, one lowercase letter, one number, and one special character (`@$!%*?&_^#- `).".
         guest_submit_label (str): The label for the guest login button. Default is "Guest login".
 
     Returns:
@@ -184,7 +184,7 @@ def login_form(
                         disabled=st.session_state["authenticated"],
                     ):
                         if constrain_password and not validate_password(password):
-                            st.error(password_constrain_check_fail_message)
+                            st.error(password_constraint_check_fail_message)
                             st.stop()
 
                         try:
