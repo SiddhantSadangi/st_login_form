@@ -1,10 +1,24 @@
+import re
+
 import argon2
 import streamlit as st
 from st_supabase_connection import SupabaseConnection
 from stqdm import stqdm
 from supabase import Client
 
-__version__ = "1.0.1"
+__version__ = "1.1.0"
+
+password_pattern = re.compile(
+    r"^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&_^#-])[A-Za-z\d@$!%*?&_^#-]{8,}$"
+)
+
+
+def validate_password(password):
+    if not password_pattern.match(password):
+        st.error(
+            "Password must contain at least 8 characters, including one uppercase letter, one lowercase letter, one number, and one special character (`$!%*?&_^#-`)."
+        )
+        st.stop()
 
 
 def login_success(message: str, username: str) -> None:
@@ -38,6 +52,7 @@ def login_form(
     user_tablename: str = "users",
     username_col: str = "username",
     password_col: str = "password",
+    constrain_password: bool = True,
     create_title: str = "Create new account :baby: ",
     login_title: str = "Login to existing account :prince: ",
     allow_guest: bool = True,
@@ -138,6 +153,9 @@ def login_form(
                         type="primary",
                         disabled=st.session_state["authenticated"],
                     ):
+                        if constrain_password:
+                            validate_password(password)
+
                         try:
                             client.table(user_tablename).insert(
                                 {username_col: username, password_col: hashed_password}

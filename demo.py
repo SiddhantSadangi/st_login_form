@@ -86,6 +86,7 @@ try:
             | user_tablename | `str` | users |
             | username_col | `str` | username |
             | password_col | `str` | password |
+            | constrain_password | `bool` | `True` |
             | create_title | `str` | Create new account :baby:  |
             | login_title | `str` | Login to existing account :prince:  |
             | allow_guest | `bool` | `True` |
