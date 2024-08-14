@@ -139,7 +139,7 @@ To bulk-update all existing plaintext passwords in the table, use the `hash_curr
           user_tablename (str): The name of the table in the database that stores user information. Default is "users".
           username_col (str): The name of the column in the user table that stores usernames. Default is "username".
           password_col (str): The name of the column in the user table that stores passwords. Default is "password".
-          constrain_password (bool): Whether to enforce password constraints (atleast 8 characters, including one uppercase letter, one lowercase letter, one number, and one special character (`$!%*?&_^#-`)). Default is True.
+          constrain_password (bool): Whether to enforce password constraints (at least 8 characters, including one uppercase letter, one lowercase letter, one number, and one special character (`@$!%*?&_^#-`)). Default is True.
           create_title (str): The title of the create new account tab. Default is "Create new account :baby: ".
           login_title (str): The title of the login to existing account tab. Default is "Login to existing account :prince: ".
           allow_guest (bool): Whether to allow guest login. Default is True.
