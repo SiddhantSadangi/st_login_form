@@ -16,6 +16,7 @@ A Streamlit authentication component that creates a user login form connected to
 ## :rocket: Features
 - One-line authentication frontend  
 - Password hashing using the award-winning [Argon2](https://github.com/p-h-c/phc-winner-argon2) algorithm  
+- Inbuilt password constraint checks
 - Create new account, login to existing account, or login as guest
 - Hash existing plaintext passwords in one-line of code
 - Auto-collapses and disables the form on successful authentication
@@ -102,6 +103,7 @@ To bulk-update all existing plaintext passwords in the table, use the `hash_curr
       user_tablename: str = "users",
       username_col: str = "username",
       password_col: str = "password",
+      constrain_password: bool = True,
       create_title: str = "Create new account :baby: ",
       login_title: str = "Login to existing account :prince: ",
       allow_guest: bool = True,
@@ -132,8 +134,38 @@ To bulk-update all existing plaintext passwords in the table, use the `hash_curr
       Sets `session_state["authenticated"]` to True if the login is successful.
       Sets `session_state["username"]` to provided username or new or existing user, and to `None` for guest login.
 
+      Arguments:
+          title (str): The title of the login form. Default is "Authentication".
+          user_tablename (str): The name of the table in the database that stores user information. Default is "users".
+          username_col (str): The name of the column in the user table that stores usernames. Default is "username".
+          password_col (str): The name of the column in the user table that stores passwords. Default is "password".
+          constrain_password (bool): Whether to enforce password constraints (at least 8 characters, including one uppercase letter, one lowercase letter, one number, and one special character (`@$!%*?&_^#- `)). Default is True.
+          create_title (str): The title of the create new account tab. Default is "Create new account :baby: ".
+          login_title (str): The title of the login to existing account tab. Default is "Login to existing account :prince: ".
+          allow_guest (bool): Whether to allow guest login. Default is True.
+          allow_create (bool): Whether to allow creating new accounts. Default is True.
+          guest_title (str): The title of the guest login tab. Default is "Guest login :ninja: ".
+          create_username_label (str): The label for the create username input field. Default is "Create a unique username".
+          create_username_placeholder (str): The placeholder text for the create username input field. Default is None.
+          create_username_help (str): The help text for the create username input field. Default is None.
+          create_password_label (str): The label for the create password input field. Default is "Create a password".
+          create_password_placeholder (str): The placeholder text for the create password input field. Default is None.
+          create_password_help (str): The help text for the create password input field. Default is "Password cannot be recovered if lost".
+          create_submit_label (str): The label for the create account submit button. Default is "Create account".
+          create_success_message (str): The success message displayed after creating a new account. Default is "Account created and logged-in :tada:".
+          login_username_label (str): The label for the login username input field. Default is "Enter your unique username".
+          login_username_placeholder (str): The placeholder text for the login username input field. Default is None.
+          login_username_help (str): The help text for the login username input field. Default is None.
+          login_password_label (str): The label for the login password input field. Default is "Enter your password".
+          login_password_placeholder (str): The placeholder text for the login password input field. Default is None.
+          login_password_help (str): The help text for the login password input field. Default is None.
+          login_submit_label (str): The label for the login submit button. Default is "Login".
+          login_success_message (str): The success message displayed after a successful login. Default is "Login succeeded :tada:".
+          login_error_message (str): The error message displayed when the username or password is incorrect. Default is "Wrong username/password :x: ".
+          guest_submit_label (str): The label for the guest login button. Default is "Guest login".
+
       Returns:
-      Supabase client instance
+          Supabase.client: The client instance for performing downstream supabase operations.
       """
   ```
 
@@ -158,7 +190,7 @@ Here are some features that are planned for future releases across the library a
 
 ### Library Features
 - [ ] Add logout option  
- [ ] Add password requirements for minimum length and character types
+- [ ] Customize password constrains (minimum length, allowed characters, etc.)
 - [ ] Add password recovery option
 - [ ] Support additional databases:
   - [ ] MySQL

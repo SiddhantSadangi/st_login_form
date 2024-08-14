@@ -4,7 +4,19 @@ from st_supabase_connection import SupabaseConnection
 from stqdm import stqdm
 from supabase import Client
 
-__version__ = "1.0.1"
+__version__ = "1.1.0"
+
+
+def validate_password(
+    password: str, min_length: int = 8, special_chars: str = "@$!%*?&_^#- "
+) -> bool:
+    required_chars = [
+        lambda s: any(x.isupper() for x in s),
+        lambda s: any(x.islower() for x in s),
+        lambda s: any(x.isdigit() for x in s),
+        lambda s: any(x in special_chars for x in s),
+    ]
+    return len(password) >= min_length and all(check(password) for check in required_chars)
 
 
 def login_success(message: str, username: str) -> None:
@@ -38,6 +50,7 @@ def login_form(
     user_tablename: str = "users",
     username_col: str = "username",
     password_col: str = "password",
+    constrain_password: bool = True,
     create_title: str = "Create new account :baby: ",
     login_title: str = "Login to existing account :prince: ",
     allow_guest: bool = True,
@@ -60,6 +73,7 @@ def login_form(
     login_submit_label: str = "Login",
     login_success_message: str = "Login succeeded :tada:",
     login_error_message: str = "Wrong username/password :x: ",
+    password_constrain_check_fail_message: str = "Password must contain at least 8 characters, including one uppercase letter, one lowercase letter, one number, and one special character (`@$!%*?&_^#- `).",
     guest_submit_label: str = "Guest login",
 ) -> Client:
     """Creates a user login form in Streamlit apps.
@@ -68,8 +82,39 @@ def login_form(
     Sets `session_state["authenticated"]` to True if the login is successful.
     Sets `session_state["username"]` to provided username or new or existing user, and to `None` for guest login.
 
+    Arguments:
+        title (str): The title of the login form. Default is "Authentication".
+        user_tablename (str): The name of the table in the database that stores user information. Default is "users".
+        username_col (str): The name of the column in the user table that stores usernames. Default is "username".
+        password_col (str): The name of the column in the user table that stores passwords. Default is "password".
+        constrain_password (bool): Whether to enforce password constraints (at least 8 characters, including one uppercase letter, one lowercase letter, one number, and one special character (`@$!%*?&_^#- `). Default is True.
+        create_title (str): The title of the create new account tab. Default is "Create new account :baby: ".
+        login_title (str): The title of the login to existing account tab. Default is "Login to existing account :prince: ".
+        allow_guest (bool): Whether to allow guest login. Default is True.
+        allow_create (bool): Whether to allow creating new accounts. Default is True.
+        guest_title (str): The title of the guest login tab. Default is "Guest login :ninja: ".
+        create_username_label (str): The label for the create username input field. Default is "Create a unique username".
+        create_username_placeholder (str): The placeholder text for the create username input field. Default is None.
+        create_username_help (str): The help text for the create username input field. Default is None.
+        create_password_label (str): The label for the create password input field. Default is "Create a password".
+        create_password_placeholder (str): The placeholder text for the create password input field. Default is None.
+        create_password_help (str): The help text for the create password input field. Default is "Password cannot be recovered if lost".
+        create_submit_label (str): The label for the create account submit button. Default is "Create account".
+        create_success_message (str): The success message displayed after creating a new account. Default is "Account created and logged-in :tada:".
+        login_username_label (str): The label for the login username input field. Default is "Enter your unique username".
+        login_username_placeholder (str): The placeholder text for the login username input field. Default is None.
+        login_username_help (str): The help text for the login username input field. Default is None.
+        login_password_label (str): The label for the login password input field. Default is "Enter your password".
+        login_password_placeholder (str): The placeholder text for the login password input field. Default is None.
+        login_password_help (str): The help text for the login password input field. Default is None.
+        login_submit_label (str): The label for the login submit button. Default is "Login".
+        login_success_message (str): The success message displayed after a successful login. Default is "Login succeeded :tada:".
+        login_error_message (str): The error message displayed when the username or password is incorrect. Default is "Wrong username/password :x: ".
+        password_constrain_check_fail_message (str): The error message displayed when the password does not meet the constraints. Default is "Password must contain at least 8 characters, including one uppercase letter, one lowercase letter, one number, and one special character (`@$!%*?&_^#- `).".
+        guest_submit_label (str): The label for the guest login button. Default is "Guest login".
+
     Returns:
-    Supabase client instance
+        Supabase.client: The client instance for performing downstream supabase operations.
     """
 
     # Initialize the Supabase connection
@@ -138,6 +183,10 @@ def login_form(
                         type="primary",
                         disabled=st.session_state["authenticated"],
                     ):
+                        if constrain_password and not validate_password(password):
+                            st.error(password_constrain_check_fail_message)
+                            st.stop()
+
                         try:
                             client.table(user_tablename).insert(
                                 {username_col: username, password_col: hashed_password}
