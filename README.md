@@ -1,10 +1,15 @@
-# :lock: Streamlit Login Form
-![PyPI Version](https://img.shields.io/pypi/v/st-login-form.svg) &emsp; [![Downloads](https://static.pepy.tech/personalized-badge/st-login-form?period=total&left_text=Downloads)](https://pepy.tech/project/st-login-form) &emsp; ![License](https://img.shields.io/github/license/SiddhantSadangi/st_login_form.svg) &emsp; ![PRs Welcome](https://img.shields.io/badge/PRs-Welcome-brightgreen.svg)
+<h1 align="center"> 🔐 Streamlit Login Form </h1>
 
-A Streamlit authentication component that creates a user login form connected to a Supabase DB.
-
-![Form screenshot](assets/screenshot.png)
-
+<div align="center">
+    <img src="https://img.shields.io/pypi/v/st-login-form.svg" alt="PyPI downloads">
+    <a href="https://pepy.tech/project/st-login-form"> <img src="https://static.pepy.tech/personalized-badge/st-login-form?period=total&left_text=Downloads"> </a>
+    <img src="https://img.shields.io/github/license/SiddhantSadangi/st_login_form.svg" alt="License">
+    <img src="https://img.shields.io/badge/PRs-Welcome-brightgreen.svg" alt="PRs Welcome">
+    <br><br>
+    A Streamlit authentication component that creates a user login form connected to a Supabase DB.
+    <br><br>
+    <img src="assets/screenshot.png" alt="App screenshot">
+</div>
 
 ## :balloon: Try the Demo App
 <div align="center">
@@ -191,8 +196,11 @@ To bulk-update all existing plaintext passwords in the table, use the `hash_curr
 Here are some features that are planned for future releases across the library and demo app. If you want to contribute to any of these features, feel free to open a PR!
 
 ### Library Features
-- [ ] Add logout option  
-- [ ] Customize password constrains (minimum length, allowed characters, etc.)
+- [ ] Add retype password for confirmation while signing up
+- [ ] Customize password constraints (minimum length, allowed characters, etc.)
+- [ ] Add logout option
+- [ ] Capture additional login metadata - created_at, last_login_at, num_logins, etc.
+- [ ] Add admin panel to set user roles and permissions
 - [ ] Add password recovery option
 - [ ] Support additional databases:
   - [ ] MySQL
