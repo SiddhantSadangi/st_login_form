@@ -4,7 +4,7 @@ from st_supabase_connection import SupabaseConnection
 from stqdm import stqdm
 from supabase import Client
 
-__version__ = "1.1.0"
+__version__ = "1.1.1"
 
 
 def validate_password(
@@ -25,13 +25,11 @@ def login_success(message: str, username: str) -> None:
     st.session_state["username"] = username
 
 
-# An argon2 version of my previous functions that used bcrypt
 class Authenticator(argon2.PasswordHasher):
     """A class derived from `argon2.PasswordHasher` to provide functionality for the authentication process"""
 
     def generate_pwd_hash(self, password: str):
         """Generates a hashed version of the provided password using `argon2`."""
-        # Check if the password is already hashed; if so, return it directly
         return password if password.startswith("$argon2id$") else self.hash(password)
 
     def verify_password(self, hashed_password, plain_password):
@@ -196,6 +194,7 @@ def login_form(
                             st.session_state["authenticated"] = False
                         else:
                             login_success(create_success_message, username)
+                            st.rerun()
 
         # Login to existing account
         with login_tab:
@@ -240,6 +239,7 @@ def login_form(
                             # This step is recommended by the argon2-cffi documentation
                             if auth.check_needs_rehash(db_password):
                                 _ = rehash_pwd_in_db(password, username)
+                            st.rerun()
                         else:
                             st.error(login_error_message)
                             st.session_state["authenticated"] = False
@@ -257,7 +257,7 @@ def login_form(
                     disabled=st.session_state["authenticated"],
                 ):
                     st.session_state["authenticated"] = True
-
+                    st.rerun()
         return client
 
 

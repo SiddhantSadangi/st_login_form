@@ -187,7 +187,7 @@ To bulk-update all existing plaintext passwords in the table, use the `hash_curr
       """Hashes all current plaintext passwords stored in a database table (in-place)."""
   ```
 
-## 🖼️ Gallery
+## :framed_picture: Gallery
 Some notable Streamlit apps using `st-login-form`
 
 - [SmartExam.io](https://smartexam.io/): SmartExam is an AI app that leverages University lectures to create interactive test exams.
