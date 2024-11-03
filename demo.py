@@ -65,23 +65,31 @@ try:
         )
 
     # ---------- MAIN PAGE ----------
-    st.title("🔐 st-login-form demo")
+    st.title("🔐 `st-login-form` demo")
 
     st.write(
         "This app shows how you can use [`st-login-form`](https://github.com/SiddhantSadangi/st_login_form) to create Supabase connected user-login forms for Streamlit apps."
     )
 
-    st.write("1. Install")
-    st.code("pip install st-login-form", language="bash")
-    st.write("2. Import")
-    st.code("from st_login_form import login_form", language="python")
-    st.write("3. Use")
-    st.code("client = login_form()", language="python")
-    with st.expander("💡 `login_form()` API reference", expanded=False):
+    with st.expander("Installation", icon=":material/install_desktop:", expanded=False):
+        st.write("1. Install")
+        st.code("pip install st-login-form", language="bash")
+        st.write("2. Import")
+        st.code("from st_login_form import login_form", language="python")
+        st.write("3. Use")
+        st.code("client = login_form()", language="python")
+        st.info(
+            "Detailed installation instructions [here](https://github.com/SiddhantSadangi/st_login_form?tab=readme-ov-file#building_construction-installation)."
+        )
+        st.write(
+            "`login_form()` creates the below form and returns the `Supabase.client` instance that can then be used to perform downstream supabase operations"
+        )
+    with st.expander(
+        "`login_form()` API reference",
+        icon=":material/lightbulb:",
+        expanded=False,
+    ):
         st.write(st_login_form.login_form.__doc__)
-    st.write(
-        "`login_form()` creates the below form and returns the `Supabase.client` instance that can then be used to perform downstream supabase operations"
-    )
 
     client = st_login_form.login_form(user_tablename="demo_users")
 

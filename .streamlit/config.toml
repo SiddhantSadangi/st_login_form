@@ -1,5 +1,5 @@
 [theme]
-base="dark"
+base = "dark"
 
 [client]
 toolbarMode = "minimal"
