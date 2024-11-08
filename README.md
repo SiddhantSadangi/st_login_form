@@ -209,6 +209,9 @@ Here are some features that are planned for future releases across the library a
 - [ ] Allow users to customise demo login form  
 - [ ] Add code preview for the rendered login form  
 
+### Chores
+- [ ] Add tests
+
 ## :bow: Acknowledgements
 - [Streamlit](https://streamlit.io) for the amazing Streamlit framework and promoting this library
 - [Ahmed Ramadan](https://www.linkedin.com/in/theahmedrmdan/) for implementing password hashing
