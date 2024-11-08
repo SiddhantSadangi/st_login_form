@@ -1,5 +1,6 @@
 import argon2
 import streamlit as st
+from streamlit.connections import SQLConnection
 from st_supabase_connection import SupabaseConnection
 from stqdm import stqdm
 from supabase import Client
@@ -43,8 +44,11 @@ class Authenticator(argon2.PasswordHasher):
 # Create the python function that will be called
 def login_form(
     *,
+    connection: SQLConnection | SupabaseConnection | None = None,
     title: str = "Authentication",
     icon: str = ":material/lock:",
+    user_databasename: str = None,
+    user_schemaname: str = None,
     user_tablename: str = "users",
     username_col: str = "username",
     password_col: str = "password",
@@ -74,13 +78,17 @@ def login_form(
 ) -> Client:
     """Creates a user login form in Streamlit apps.
 
-    Connects to a Supabase DB using `SUPABASE_URL` and `SUPABASE_KEY` Streamlit secrets.
+    Connects to a database using either a provided connection or creates a new Supabase connection
+    using `SUPABASE_URL` and `SUPABASE_KEY` Streamlit secrets.
     Sets `session_state["authenticated"]` to True if the login is successful.
     Sets `session_state["username"]` to provided username or new or existing user, and to `None` for guest login.
 
     Arguments:
+        connection: Optional pre-configured connection instance. If not provided, creates a Supabase connection.
         title (str): The title of the login form. Default is "Authentication".
         icon (str): The icon to display next to the title. Default is ":material/lock:".
+        user_databasename (str): The name of the database that stores user information. Default is None.
+        user_schemaname (str): The name of the schema that stores user information. Default is None.
         user_tablename (str): The name of the table in the database that stores user information. Default is "users".
         username_col (str): The name of the column in the user table that stores usernames. Default is "username".
         password_col (str): The name of the column in the user table that stores passwords. Default is "password".
@@ -109,7 +117,7 @@ def login_form(
         guest_submit_label (str): The label for the guest login button. Default is ":material/visibility_off: Guest login".
 
     Returns:
-        Supabase.client: The client instance for performing downstream supabase operations.
+        Connection.client: The client instance for performing downstream database (e.g., SQL, Supabase) operations.
 
     Example:
     >>> client = st_login_form.login_form(user_tablename="demo_users")
@@ -123,15 +131,45 @@ def login_form(
     >>>     st.error("Not authenticated")
     """
 
-    # Initialize the Supabase connection
-    client = st.connection(name="supabase", type=SupabaseConnection)
+    # Initialize the connection
+    client = connection if connection is not None else st.connection(name="supabase", type=SupabaseConnection)
     auth = Authenticator()
 
     def rehash_pwd_in_db(password, username) -> str:
         """A procedure to rehash given password in the db if necessary."""
         hashed_password = auth.generate_pwd_hash(password)
-        client.table(user_tablename).update({password_col: hashed_password}).match(
-            {username_col: username}
+        
+        if isinstance(connection, SQLConnection):
+            if connection.engine.startswith("Engine(postgres"):
+                db_name = user_databasename or "postgres"
+                schema_name = user_schemaname or "public"
+                fqn = f"{db_name}.{schema_name}.{user_tablename}"
+                
+                with connection.session as session:
+                    session.execute(
+                        f"UPDATE {fqn} SET {password_col} = :pwd WHERE {username_col} = :user",
+                        {"pwd": hashed_password, "user": username}
+                    )
+            elif connection.engine.startswith("Engine(mysql"):
+                db_name = user_databasename or "mysql"
+                fqn = f"{db_name}.{user_tablename}"
+                
+                with connection.session as session:
+                    session.execute(
+                        f"UPDATE {fqn} SET {password_col} = :pwd WHERE {username_col} = :user",
+                        {"pwd": hashed_password, "user": username}
+                    )
+            elif connection.engine.startswith("Engine(sqlite"):
+                with connection.session as session:
+                    session.execute(
+                        f"UPDATE {user_tablename} SET {password_col} = :pwd WHERE {username_col} = :user",
+                        {"pwd": hashed_password, "user": username}
+                    )
+            else:
+                raise ValueError(f"This SQLAlchemy engine is not yet supported: {connection.engine}")
+        else:
+            client.table(user_tablename).update({password_col: hashed_password}).match(
+                {username_col: username}
         ).execute()
 
         return hashed_password
@@ -273,33 +311,92 @@ def login_form(
 
 
 def hash_current_passwords(
+    connection: SQLConnection | SupabaseConnection | None = None,
+    user_databasename: str = None,
+    user_schemaname: str = None,
     user_tablename: str = "users",
     username_col: str = "username",
     password_col: str = "password",
 ) -> None:
     """Hashes all current plaintext passwords stored in a database table (in-place)."""
 
-    from st_supabase_connection import execute_query
-
-    # Initialize the Supabase connection
-    client = st.connection(name="supabase", type=SupabaseConnection)
+    # Initialize the connection
+    client = connection if connection is not None else st.connection(name="supabase", type=SupabaseConnection)
     auth = Authenticator()
 
-    # Select usernames and plaintext passwords from the specified table
-    user_pass_dicts = execute_query(
-        client.table(user_tablename)
-        .select(f"{username_col}, {password_col}")
-        .not_.like(password_col, "$argon2id$%")
-    ).data
+    # Select usernames and plaintext passwords based on connection type
+    if isinstance(client, SQLConnection):
+        if client.engine.startswith("Engine(postgres"):
+            # Default to 'postgres.public' if not specified
+            db_name = user_databasename or "postgres"
+            schema_name = user_schemaname or "public"
+            fqn = f"{db_name}.{schema_name}.{user_tablename}"
+            
+            user_pass_dicts = client.query(
+                f"SELECT {username_col}, {password_col} FROM {fqn} "
+                f"WHERE {password_col} NOT LIKE '$argon2id$%'"
+            ).to_dict('records')
+        elif client.engine.startswith("Engine(mysql"):
+            # MySQL only needs database name, defaults to 'mysql'
+            db_name = user_databasename or "mysql"
+            fqn = f"{db_name}.{user_tablename}"
+            
+            user_pass_dicts = client.query(
+                f"SELECT {username_col}, {password_col} FROM {fqn} "
+                f"WHERE {password_col} NOT LIKE '$argon2id$%'"
+            ).to_dict('records')
+        elif client.engine.startswith("Engine(sqlite"):
+            # SQLite only needs table name
+            user_pass_dicts = client.query(
+                f"SELECT {username_col}, {password_col} FROM {user_tablename} "
+                f"WHERE {password_col} NOT LIKE '$argon2id$%'"
+            ).to_dict('records')
+        else:
+            raise ValueError(f"This SQLAlchemy engine is not yet supported: {client.engine}")
+    else:  # Supabase
+        from st_supabase_connection import execute_query
+        user_pass_dicts = execute_query(
+            client.table(user_tablename)
+            .select(f"{username_col}, {password_col}")
+            .not_.like(password_col, "$argon2id$%")
+        ).data
 
     if len(user_pass_dicts) > 0:
         st.warning(f"Hashing {len(user_pass_dicts)} plaintext passwords.")
         # Iterate over each username-password pair, re-hash passwords, and update the table
         for pair in stqdm(user_pass_dicts):
             pair["password"] = auth.generate_pwd_hash(pair["password"])
-            client.table(user_tablename).update({password_col: pair["password"]}).match(
-                {username_col: pair["username"]}
-            ).execute()
+            if isinstance(client, SQLConnection):
+                if client.engine.startswith("Engine(postgres"):
+                    db_name = user_databasename or "postgres"
+                    schema_name = user_schemaname or "public"
+                    fqn = f"{db_name}.{schema_name}.{user_tablename}"
+                    
+                    with client.session as session:
+                        session.execute(
+                            f"UPDATE {fqn} SET {password_col} = :pwd "
+                            f"WHERE {username_col} = :user",
+                            {"fqn": f"{user_databasename}.{user_schemaname}.{user_tablename}", "pwd": pair["password"], "user": pair["username"]}
+                        )
+                    session.commit()
+                elif client.engine.startswith("Engine(mysql"):
+                    with client.session as session:
+                        session.execute(
+                            f"UPDATE :fqn SET {password_col} = :pwd "
+                            f"WHERE {username_col} = :user",
+                            {"fqn": f"{user_databasename}.{user_tablename}", "pwd": pair["password"], "user": pair["username"]}
+                        )
+                    session.commit()
+                elif client.engine.startswith("Engine(sqlite"):
+                    with client.session as session:
+                        session.execute(
+                            f"UPDATE :fqn SET {password_col} = :pwd "
+                            f"WHERE {username_col} = :user",
+                            {"fqn": f"{user_tablename}", "pwd": pair["password"], "user": pair["username"]}
+                        )
+                    session.commit()
+            else:
+                raise ValueError(f"This SQLAlchemy engine is not yet supported: {client.engine}")
         st.success("All passwords hashed successfully.", icon="🔒")
     else:
         st.success("All passwords are already hashed.", icon="🔒")
