@@ -29,11 +29,16 @@
 ## :building_construction: Installation
 
 1. Install `st-login-form`
-```sh
-pip install st-login-form
-```
-2. Create a Supabase project as mentioned [here](https://docs.streamlit.io/knowledge-base/tutorials/databases/supabase#sign-in-to-supabase-and-create-a-project)
-3. Create a table to store the usernames and passwords. A sample DDL query is shown below:
+   1. For Supabase database
+      ```sh
+      pip install st-login-form[supabase_connection]
+      ```
+   2. For SQL database
+      ```sh
+      pip install st-login-form[sql_connection]
+      ```
+1. Create a Supabase project as mentioned [here](https://docs.streamlit.io/knowledge-base/tutorials/databases/supabase#sign-in-to-supabase-and-create-a-project)
+2. Create a table to store the usernames and passwords. A sample DDL query is shown below:
   ```sql
   CREATE TABLE users (
       username text not null default ''::text,
@@ -64,7 +69,7 @@ pip install st-login-form
       )
     ) tablespace pg_default;
   ```
-4. Follow the rest of the steps from [here](https://docs.streamlit.io/knowledge-base/tutorials/databases/supabase#copy-your-app-secrets-to-the-cloud) to connect your Streamlit app to Supabase
+1. Follow the rest of the steps from [here](https://docs.streamlit.io/knowledge-base/tutorials/databases/supabase#copy-your-app-secrets-to-the-cloud) to connect your Streamlit app to Supabase
 
 
 ## :pen: Usage
