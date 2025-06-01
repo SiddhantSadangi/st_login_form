@@ -1,6 +1,6 @@
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.6.0
+  rev: v5.0.0
   hooks:
   - id: check-ast
   - id: check-executables-have-shebangs
@@ -13,19 +13,19 @@ repos:
   - id: trailing-whitespace
     args: [--markdown-linebreak-ext=md]
 - repo: https://github.com/pycqa/isort
-  rev: 5.13.2
+  rev: 6.0.1
   hooks:
   - id: isort
     args: [--profile, black]
 - repo: https://github.com/psf/black
-  rev: 24.4.2
+  rev: 25.1.0
   hooks:
   - id: black
     args:
     - --line-length=100
 
 - repo: https://github.com/sourcery-ai/sourcery
-  rev: v1.27.0
+  rev: v1.37.0
   hooks:
   - id: sourcery
     # The best way to use Sourcery in a pre-commit hook:

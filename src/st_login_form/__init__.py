@@ -1,48 +1,22 @@
-import argon2
+from typing import Optional
+
 import streamlit as st
 from st_supabase_connection import SupabaseConnection
-from stqdm import stqdm
 from supabase import Client
 
-__version__ = "1.2.0"
+from .auth import (
+    Authenticator,
+    reset_authentication,
+    set_authenticated,
+    validate_password,
+)
+
+__version__ = "1.3.0"
 
 
-def validate_password(
-    password: str, min_length: int = 8, special_chars: str = "@$!%*?&_^#- "
-) -> bool:
-    required_chars = [
-        lambda s: any(x.isupper() for x in s),
-        lambda s: any(x.islower() for x in s),
-        lambda s: any(x.isdigit() for x in s),
-        lambda s: any(x in special_chars for x in s),
-    ]
-    return len(password) >= min_length and all(check(password) for check in required_chars)
-
-
-def login_success(username: str) -> None:
-    st.session_state["authenticated"] = True
-    st.session_state["username"] = username
-
-
-class Authenticator(argon2.PasswordHasher):
-    """A class derived from `argon2.PasswordHasher` to provide functionality for the authentication process"""
-
-    def generate_pwd_hash(self, password: str):
-        """Generates a hashed version of the provided password using `argon2`."""
-        return password if password.startswith("$argon2id$") else self.hash(password)
-
-    def verify_password(self, hashed_password, plain_password):
-        """Verifies if a plaintext password matches a hashed one using `argon2`."""
-        try:
-            if self.verify(hashed_password, plain_password):
-                return True
-        except argon2.exceptions.VerificationError:
-            return False
-
-
-# Create the python function that will be called
 def login_form(
     *,
+    client: Optional[Client] = None,
     title: str = "Authentication",
     icon: str = ":material/lock:",
     user_tablename: str = "users",
@@ -72,44 +46,46 @@ def login_form(
     password_constraint_check_fail_message: str = ":material/warning: Password must contain at least 8 characters, including one uppercase letter, one lowercase letter, one number, and one special character (`@$!%*?&_^#- `).",
     guest_submit_label: str = ":material/visibility_off: Guest login",
 ) -> Client:
-    """Creates a user login form in Streamlit apps.
+    """
+    Creates a user login form in Streamlit apps.
 
-    Connects to a Supabase DB using `SUPABASE_URL` and `SUPABASE_KEY` Streamlit secrets.
+    Connects to a Supabase DB using `SUPABASE_URL` and `SUPABASE_KEY` Streamlit secrets, unless a client is provided.
     Sets `session_state["authenticated"]` to True if the login is successful.
     Sets `session_state["username"]` to provided username or new or existing user, and to `None` for guest login.
 
-    Arguments:
-        title (str): The title of the login form. Default is "Authentication".
-        icon (str): The icon to display next to the title. Default is ":material/lock:".
-        user_tablename (str): The name of the table in the database that stores user information. Default is "users".
-        username_col (str): The name of the column in the user table that stores usernames. Default is "username".
-        password_col (str): The name of the column in the user table that stores passwords. Default is "password".
-        constrain_password (bool): Whether to enforce password constraints (at least 8 characters, including one uppercase letter, one lowercase letter, one number, and one special character (`@$!%*?&_^#- `)). Default is True.
-        create_title (str): The title of the create new account tab. Default is ":material/add_circle: Create new account".
-        login_title (str): The title of the login to existing account tab. Default is ":material/login: Login to existing account".
-        allow_guest (bool): Whether to allow guest login. Default is True.
-        allow_create (bool): Whether to allow creating new accounts. Default is True.
-        guest_title (str): The title of the guest login tab. Default is ":material/visibility_off: Guest login".
-        create_username_label (str): The label for the create username input field. Default is "Create a unique username".
-        create_username_placeholder (str): The placeholder text for the create username input field. Default is None.
-        create_username_help (str): The help text for the create username input field. Default is None.
-        create_password_label (str): The label for the create password input field. Default is "Create a password".
-        create_password_placeholder (str): The placeholder text for the create password input field. Default is None.
-        create_password_help (str): The help text for the create password input field. Default is ":material/warning: Password cannot be recovered if lost".
-        create_submit_label (str): The label for the create account submit button. Default is ":material/add_circle: Create account".
-        login_username_label (str): The label for the login username input field. Default is "Enter your unique username".
-        login_username_placeholder (str): The placeholder text for the login username input field. Default is None.
-        login_username_help (str): The help text for the login username input field. Default is None.
-        login_password_label (str): The label for the login password input field. Default is "Enter your password".
-        login_password_placeholder (str): The placeholder text for the login password input field. Default is None.
-        login_password_help (str): The help text for the login password input field. Default is None.
-        login_submit_label (str): The label for the login submit button. Default is ":material/login: Login".
-        login_error_message (str): The error message displayed when the username or password is incorrect. Default is ":material/lock: Wrong username/password".
-        password_constraint_check_fail_message (str): The error message displayed when the password does not meet the constraints. Default is ":material/warning: Password must contain at least 8 characters, including one uppercase letter, one lowercase letter, one number, and one special character (`@$!%*?&_^#- `).".
-        guest_submit_label (str): The label for the guest login button. Default is ":material/visibility_off: Guest login".
+    Args:
+        client (Optional[Client]): An optional Supabase client instance. If not provided, one will be created.
+        title (str): The title of the login form.
+        icon (str): The icon to display next to the title.
+        user_tablename (str): The name of the table in the database that stores user information.
+        username_col (str): The name of the column in the user table that stores usernames.
+        password_col (str): The name of the column in the user table that stores passwords.
+        constrain_password (bool): Whether to enforce password constraints.
+        create_title (str): The title of the create new account tab.
+        login_title (str): The title of the login to existing account tab.
+        allow_guest (bool): Whether to allow guest login.
+        allow_create (bool): Whether to allow creating new accounts.
+        guest_title (str): The title of the guest login tab.
+        create_username_label (str): The label for the create username input field.
+        create_username_placeholder (str): The placeholder text for the create username input field.
+        create_username_help (str): The help text for the create username input field.
+        create_password_label (str): The label for the create password input field.
+        create_password_placeholder (str): The placeholder text for the create password input field.
+        create_password_help (str): The help text for the create password input field.
+        create_submit_label (str): The label for the create account submit button.
+        login_username_label (str): The label for the login username input field.
+        login_username_placeholder (str): The placeholder text for the login username input field.
+        login_username_help (str): The help text for the login username input field.
+        login_password_label (str): The label for the login password input field.
+        login_password_placeholder (str): The placeholder text for the login password input field.
+        login_password_help (str): The help text for the login password input field.
+        login_submit_label (str): The label for the login submit button.
+        login_error_message (str): The error message displayed when the username or password is incorrect.
+        password_constraint_check_fail_message (str): The error message displayed when the password does not meet the constraints.
+        guest_submit_label (str): The label for the guest login button.
 
     Returns:
-        Supabase.client: The client instance for performing downstream supabase operations.
+        Client: The Supabase client instance for performing downstream supabase operations.
 
     Example:
     >>> client = st_login_form.login_form(user_tablename="demo_users")
@@ -123,8 +99,8 @@ def login_form(
     >>>     st.error("Not authenticated")
     """
 
-    # Initialize the Supabase connection
-    client = st.connection(name="supabase", type=SupabaseConnection)
+    if client is None:
+        client = st.connection(name="supabase", type=SupabaseConnection)
     auth = Authenticator()
 
     def rehash_pwd_in_db(password, username) -> str:
@@ -138,7 +114,7 @@ def login_form(
 
     # User Authentication
     if "authenticated" not in st.session_state:
-        st.session_state["authenticated"] = False
+        reset_authentication()
 
     if "username" not in st.session_state:
         st.session_state["username"] = None
@@ -199,10 +175,10 @@ def login_form(
                                 {username_col: username, password_col: hashed_password}
                             ).execute()
                         except Exception as e:
-                            st.error(e.message)
-                            st.session_state["authenticated"] = False
+                            st.error(str(e))
+                            reset_authentication()
                         else:
-                            login_success(username)
+                            set_authenticated(username)
                             st.rerun()
 
         # Login to existing account
@@ -245,18 +221,18 @@ def login_form(
 
                         if auth.verify_password(db_password, password):
                             # Verify hashed password
-                            login_success(username)
+                            set_authenticated(username)
                             # This step is recommended by the argon2-cffi documentation
                             if auth.check_needs_rehash(db_password):
                                 _ = rehash_pwd_in_db(password, username)
                             st.rerun()
                         else:
                             st.error(login_error_message)
-                            st.session_state["authenticated"] = False
+                            reset_authentication()
 
                     else:
                         st.error(login_error_message)
-                        st.session_state["authenticated"] = False
+                        reset_authentication()
 
         # Guest login
         if allow_guest:
@@ -267,42 +243,9 @@ def login_form(
                     disabled=st.session_state["authenticated"],
                     use_container_width=True,
                 ):
-                    st.session_state["authenticated"] = True
+                    set_authenticated()
                     st.rerun()
         return client
-
-
-def hash_current_passwords(
-    user_tablename: str = "users",
-    username_col: str = "username",
-    password_col: str = "password",
-) -> None:
-    """Hashes all current plaintext passwords stored in a database table (in-place)."""
-
-    from st_supabase_connection import execute_query
-
-    # Initialize the Supabase connection
-    client = st.connection(name="supabase", type=SupabaseConnection)
-    auth = Authenticator()
-
-    # Select usernames and plaintext passwords from the specified table
-    user_pass_dicts = execute_query(
-        client.table(user_tablename)
-        .select(f"{username_col}, {password_col}")
-        .not_.like(password_col, "$argon2id$%")
-    ).data
-
-    if len(user_pass_dicts) > 0:
-        st.warning(f"Hashing {len(user_pass_dicts)} plaintext passwords.")
-        # Iterate over each username-password pair, re-hash passwords, and update the table
-        for pair in stqdm(user_pass_dicts):
-            pair["password"] = auth.generate_pwd_hash(pair["password"])
-            client.table(user_tablename).update({password_col: pair["password"]}).match(
-                {username_col: pair["username"]}
-            ).execute()
-        st.success("All passwords hashed successfully.", icon="🔒")
-    else:
-        st.success("All passwords are already hashed.", icon="🔒")
 
 
 if __name__ == "__main__":

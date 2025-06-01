@@ -196,6 +196,7 @@ _Want to feature your app? Create a PR!_
 Here are some features that are planned for future releases across the library and demo app. If you want to contribute to any of these features, feel free to open a PR!
 
 ### Library Features
+- [ ] Add `init()` method to create required database tables
 - [ ] Add retype password for confirmation while signing up
 - [ ] Customize password constraints (minimum length, allowed characters, etc.)
 - [ ] Add logout option

@@ -25,7 +25,7 @@ try:
         sidebar_html = sidebar_file.read().replace("{VERSION}", VERSION)
 
     with st.sidebar:
-        st_html(sidebar_html, height=243)
+        st_html(sidebar_html, height=290)
 
         st.html(
             """
@@ -102,7 +102,7 @@ try:
 
     if st.session_state["authenticated"]:
         if st.session_state["username"]:
-            st.success(f"Welcome {st.session_state['username']}")
+            st.success(f"Welcome __{st.session_state['username']}__")
         else:
             st.success("Welcome guest")
     else:
