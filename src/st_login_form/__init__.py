@@ -1,13 +1,13 @@
 import argon2
 import streamlit as st
-from streamlit.connections import SQLConnection
-from st_supabase_connection import SupabaseConnection
-from stqdm import stqdm
-from supabase import Client
 from sqlalchemy import text
 from sqlalchemy.sql.elements import quoted_name
+from st_supabase_connection import SupabaseConnection
+from stqdm import stqdm
+from streamlit.connections import SQLConnection
+from supabase import Client
 
-__version__ = "1.3.0"
+__version__ = "2.0.0"
 
 
 def validate_password(
@@ -19,9 +19,7 @@ def validate_password(
         lambda s: any(x.isdigit() for x in s),
         lambda s: any(x in special_chars for x in s),
     ]
-    return len(password) >= min_length and all(
-        check(password) for check in required_chars
-    )
+    return len(password) >= min_length and all(check(password) for check in required_chars)
 
 
 def login_success(username: str, role: str | None = None) -> None:
@@ -29,6 +27,36 @@ def login_success(username: str, role: str | None = None) -> None:
     st.session_state["username"] = username
     if role is not None:
         st.session_state["authenticated_role"] = role.lower()
+
+
+def get_fully_qualified_name(connection, database, schema, table):
+    """Helper function to generate fully qualified table name based on connection type."""
+    # Quote each identifier separately
+    table = quoted_name(table, True)
+    engine_str = str(connection.engine)
+
+    if engine_str.startswith("Engine(postgres"):
+        schema = quoted_name(schema or "public", True)
+        database = quoted_name(database or "postgres", True)
+        return f"{database}.{schema}.{table}"
+    elif engine_str.startswith("Engine(mysql"):
+        database = quoted_name(database or "mysql", True)
+        return f"{database}.{table}"
+    elif engine_str.startswith("Engine(sqlite"):
+        return str(table)
+    raise ValueError(f"This SQLAlchemy engine is not yet supported: {engine_str}")
+
+
+def execute_update(connection, fqn, password_col, username_col, password, username):
+    """Helper function to execute update statement across different database engines."""
+    # Use parameterized query with quoted column names
+    password_col = quoted_name(password_col, True)
+    username_col = quoted_name(username_col, True)
+
+    with connection.session as session:
+        query = text(f"UPDATE {fqn} SET {password_col} = :pwd WHERE {username_col} = :user")
+        session.execute(query, {"pwd": password, "user": username})
+        session.commit()
 
 
 class Authenticator(argon2.PasswordHasher):
@@ -150,23 +178,6 @@ def login_form(
     )
     auth = Authenticator()
 
-    def get_fully_qualified_name(connection, database, schema, table):
-        """Helper function to generate fully qualified table name based on connection type."""
-        # Quote each identifier separately
-        table = quoted_name(table, True)
-        engine_str = str(connection.engine)
-
-        if engine_str.startswith("Engine(postgres"):
-            schema = quoted_name(schema or "public", True)
-            database = quoted_name(database or "postgres", True)
-            return f"{database}.{schema}.{table}"
-        elif engine_str.startswith("Engine(mysql"):
-            database = quoted_name(database or "mysql", True)
-            return f"{database}.{table}"
-        elif engine_str.startswith("Engine(sqlite"):
-            return str(table)
-        raise ValueError(f"This SQLAlchemy engine is not yet supported: {engine_str}")
-
     def execute_update(connection, fqn, password_col, username_col, password, username):
         """Helper function to execute update statement across different database engines."""
         # Use parameterized query with quoted column names
@@ -174,9 +185,7 @@ def login_form(
         username_col = quoted_name(username_col, True)
 
         with connection.session as session:
-            query = text(
-                f"UPDATE {fqn} SET {password_col} = :pwd WHERE {username_col} = :user"
-            )
+            query = text(f"UPDATE {fqn} SET {password_col} = :pwd WHERE {username_col} = :user")
             session.execute(query, {"pwd": password, "user": username})
             session.commit()
 
@@ -188,9 +197,7 @@ def login_form(
             fqn = get_fully_qualified_name(
                 connection, user_databasename, user_schemaname, user_tablename
             )
-            execute_update(
-                connection, fqn, password_col, username_col, hashed_password, username
-            )
+            execute_update(connection, fqn, password_col, username_col, hashed_password, username)
         else:
             client.table(user_tablename).update({password_col: hashed_password}).match(
                 {username_col: username}
@@ -272,7 +279,7 @@ def login_form(
 
                                 # Include role in INSERT if role retrieval is enabled
                                 cols = f"{username_col_quoted}, {password_col_quoted}"
-                                values = f":username, :password"
+                                values = ":username, :password"
                                 if retrieve_role:
                                     role_col_quoted = quoted_name(role_col, True)
                                     cols += f", {role_col_quoted}"
@@ -280,9 +287,7 @@ def login_form(
                                     # Normalize role_default to lowercase when creating user
                                     params["role"] = role_default.lower()
 
-                                query = text(
-                                    f"INSERT INTO {fqn} ({cols}) " f"VALUES ({values})"
-                                )
+                                query = text(f"INSERT INTO {fqn} ({cols}) VALUES ({values})")
                                 with client.session as session:
                                     session.execute(
                                         query,
@@ -306,9 +311,7 @@ def login_form(
                                 if retrieve_role:
                                     insert_data[role_col] = role_default.lower()
 
-                                client.table(user_tablename).insert(
-                                    insert_data
-                                ).execute()
+                                client.table(user_tablename).insert(insert_data).execute()
                         except Exception as e:
                             error_message = getattr(
                                 e, "message", str(e)
@@ -393,11 +396,7 @@ def login_form(
 
                         if auth.verify_password(db_password, password):
                             # Normalize role to lowercase if it exists
-                            role = (
-                                data[0].get("role", "").lower()
-                                if retrieve_role
-                                else None
-                            )
+                            role = data[0].get("role", "").lower() if retrieve_role else None
                             login_success(username, role)
 
                             if auth.check_needs_rehash(db_password):
@@ -447,9 +446,7 @@ def hash_current_passwords(
 
     # Select usernames and plaintext passwords based on connection type
     if isinstance(client, SQLConnection):
-        fqn = get_fully_qualified_name(
-            client, user_databasename, user_schemaname, user_tablename
-        )
+        fqn = get_fully_qualified_name(client, user_databasename, user_schemaname, user_tablename)
         username_col_quoted = quoted_name(username_col, True)
         password_col_quoted = quoted_name(password_col, True)
 
@@ -460,9 +457,7 @@ def hash_current_passwords(
 
         with client.session as session:
             result = session.execute(query, {"pattern": "$argon2id$%"})
-            user_pass_dicts = [
-                {username_col: row[0], password_col: row[1]} for row in result
-            ]
+            user_pass_dicts = [{username_col: row[0], password_col: row[1]} for row in result]
     else:  # Supabase
         from st_supabase_connection import execute_query
 
@@ -489,9 +484,9 @@ def hash_current_passwords(
                     pair["username"],
                 )
             else:
-                client.table(user_tablename).update(
-                    {password_col: pair["password"]}
-                ).match({username_col: pair["username"]}).execute()
+                client.table(user_tablename).update({password_col: pair["password"]}).match(
+                    {username_col: pair["username"]}
+                ).execute()
         st.success("All passwords hashed successfully.", icon="🔒")
     else:
         st.success("All passwords are already hashed.", icon="🔒")
