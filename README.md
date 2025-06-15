@@ -195,6 +195,7 @@ To bulk-update all existing plaintext passwords in the table, use the `hash_curr
           guest_submit_label (str): The label for the guest login button. Default is "Login as guest".
       Returns:
           Optional[SupabaseConnection]: The Supabase connection instance for performing downstream Supabase operations, or `None` if the user is not authenticated.
+      """
   ```
 
 - `hash_current_passwords()`
