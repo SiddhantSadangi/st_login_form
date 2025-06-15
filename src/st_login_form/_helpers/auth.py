@@ -64,7 +64,7 @@ class _Authenticator(argon2.PasswordHasher):
         """
         return password if password.startswith("$argon2id$") else self.hash(password)
 
-    def verify_password(self, hashed_password: str, plain_password: str) -> bool:
+    def verify_password(self, hashed_password: str, plain_password: str) -> Optional[bool]:
         """
         Verifies if a plaintext password matches a hashed one using `argon2`.
 

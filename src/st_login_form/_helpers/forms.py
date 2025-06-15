@@ -24,6 +24,7 @@ class CreateAccountConfig:
     create_retype_password_label: str
     create_retype_password_placeholder: str
     create_retype_password_help: str
+    password_mismatch_message: str
 
 
 @dataclasses.dataclass
@@ -101,12 +102,16 @@ def _handle_create_account(
             disabled=st.session_state["authenticated"],
             use_container_width=True,
         ):
+            if not username or not password or not retype_password:
+                st.error("Please fill in all fields", icon=":material/warning:")
+                st.stop()
+
             if password != retype_password:
-                st.error("Passwords do not match", icon=":material/warning:")
+                st.error(cfg.password_mismatch_message, icon=":material/warning:")
                 st.stop()
 
             if cfg.constrain_password and not _validate_password(password):
-                st.error(cfg.password_fail_message)
+                st.error(cfg.password_fail_message, icon=":material/warning:")
                 st.stop()
 
             try:
@@ -115,7 +120,7 @@ def _handle_create_account(
                     {username_col: username, password_col: hashed_password}
                 ).execute()
             except Exception as e:
-                st.error(str(e))
+                st.error(str(e), icon=":material/warning:")
                 _reset_authentication()
                 st.stop()
             else:
@@ -150,7 +155,7 @@ def _handle_login(
                     .execute()
                 )
             except Exception as e:
-                st.error(str(e))
+                st.error(str(e), icon=":material/warning:")
                 _reset_authentication()
             else:
                 if len(response.data) > 0:
@@ -182,11 +187,11 @@ def _handle_login(
                             )
                         st.rerun()
                     else:
-                        st.error(cfg.error_message)
+                        st.error(cfg.error_message, icon=":material/warning:")
                         _reset_authentication()
 
                 else:
-                    st.error(cfg.error_message)
+                    st.error(cfg.error_message, icon=":material/warning:")
                     _reset_authentication()
 
 

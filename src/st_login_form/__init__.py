@@ -22,7 +22,7 @@ __all__ = ["login_form", "hash_current_passwords"]
 
 def login_form(
     *,
-    connection: Optional[SupabaseConnection] = None,
+    supabase_connection: Optional[SupabaseConnection] = None,
     title: str = "Authentication",
     icon: str = ":material/lock:",
     user_tablename: str = "users",
@@ -43,7 +43,8 @@ def login_form(
     create_retype_password_label: str = "Retype password",
     create_retype_password_placeholder: str = None,
     create_retype_password_help: str = None,
-    password_constraint_check_fail_message: str = ":material/warning: Password must contain at least 8 characters, including one uppercase letter, one lowercase letter, one number, and one special character (`@$!%*?&_^#- `).",
+    password_constraint_check_fail_message: str = "Password must contain at least 8 characters, including one uppercase letter, one lowercase letter, one number, and one special character (`@$!%*?&_^#- `).",
+    password_mismatch_message: str = "Passwords do not match",
     create_submit_label: str = ":material/add_circle: Create account",
     login_username_label: str = "Enter your unique username",
     login_username_placeholder: str = None,
@@ -52,7 +53,7 @@ def login_form(
     login_password_placeholder: str = None,
     login_password_help: str = None,
     login_submit_label: str = ":material/login: Login",
-    login_error_message: str = ":material/error: Wrong username/password",
+    login_error_message: str = "Wrong username/password",
     guest_submit_label: str = ":material/visibility_off: Guest login",
 ) -> Optional[SupabaseConnection]:
     """
@@ -63,7 +64,7 @@ def login_form(
     Sets `session_state["username"]` to provided username or new or existing user, and to `None` for guest login.
 
     Args:
-        connection (Optional[SupabaseConnection]): An optional Supabase connection instance. If not provided, one will be created.
+        supabase_connection (Optional[SupabaseConnection]): An optional Supabase connection instance. If not provided, one will be created.
         title (str): The title of the login form. Default is "Authentication".
         icon (str): The icon to display next to the title. Default is ":material/lock:".
         user_tablename (str): The name of the table in the database that stores user information. Default is "users".
@@ -85,6 +86,8 @@ def login_form(
         create_retype_password_placeholder (str): The placeholder text for the create retype password input field. Default is None.
         create_retype_password_help (str): The help text for the create retype password input field. Default is None.
         create_submit_label (str): The label for the create account submit button. Default is ":material/add_circle: Create account".
+        password_constraint_check_fail_message (str): The error message displayed when the password does not meet the constraints. Default is "Password must contain at least 8 characters, including one uppercase letter, one lowercase letter, one number, and one special character (`@$!%*?&_^#- `).".
+        password_mismatch_message (str): The error message displayed when the passwords do not match. Default is "Passwords do not match".
         login_username_label (str): The label for the login username input field. Default is "Enter your unique username".
         login_username_placeholder (str): The placeholder text for the login username input field. Default is None.
         login_username_help (str): The help text for the login username input field. Default is None.
@@ -92,15 +95,13 @@ def login_form(
         login_password_placeholder (str): The placeholder text for the login password input field. Default is None.
         login_password_help (str): The help text for the login password input field. Default is None.
         login_submit_label (str): The label for the login submit button. Default is ":material/login: Login".
-        login_error_message (str): The error message displayed when the username or password is incorrect. Default is ":material/error: Wrong username/password".
-        password_constraint_check_fail_message (str): The error message displayed when the password does not meet the constraints. Default is ":material/warning: Password must contain at least 8 characters, including one uppercase letter, one lowercase letter, one number, and one special character (`@$!%*?&_^#- `).".
+        login_error_message (str): The error message displayed when the username or password is incorrect. Default is "Wrong username/password".
         guest_submit_label (str): The label for the guest login button. Default is ":material/visibility_off: Guest login".
-
     Returns:
-        SupabaseConnection: The Supabase connection instance for performing downstream supabase operations.
+        Optional[SupabaseConnection]: The Supabase connection instance for performing downstream supabase operations, or `None` if the user is not authenticated.
 
     Example:
-    >>> connection = st_login_form.login_form(user_tablename="demo_users")
+    >>> supabase_connection = st_login_form.login_form()
 
     >>> if st.session_state["authenticated"]:
     >>>     if st.session_state["username"]:
@@ -111,11 +112,11 @@ def login_form(
     >>>     st.error("Not authenticated")
     """
 
-    if connection is None:
-        connection = st.connection(name="supabase", type=SupabaseConnection)
-    elif not isinstance(connection, SupabaseConnection):
+    if supabase_connection is None:
+        supabase_connection = st.connection(name="supabase", type=SupabaseConnection)
+    elif not isinstance(supabase_connection, SupabaseConnection):
         st.error(
-            "`connection` must be a [`SupabaseConnection`](https://github.com/SiddhantSadangi/st_supabase_connection) instance",
+            "`supabase_connection` must be a [`SupabaseConnection`](https://github.com/SiddhantSadangi/st_supabase_connection) instance",
             icon=":material/warning:",
         )
         st.stop()
@@ -154,10 +155,11 @@ def login_form(
                     create_retype_password_label=create_retype_password_label,
                     create_retype_password_placeholder=create_retype_password_placeholder,
                     create_retype_password_help=create_retype_password_help,
+                    password_mismatch_message=password_mismatch_message,
                 )
                 _handle_create_account(
                     auth=auth,
-                    client=connection.client,
+                    client=supabase_connection.client,
                     user_tablename=user_tablename,
                     username_col=username_col,
                     password_col=password_col,
@@ -182,7 +184,7 @@ def login_form(
             )
             _handle_login(
                 auth=auth,
-                client=connection.client,
+                client=supabase_connection.client,
                 user_tablename=user_tablename,
                 username_col=username_col,
                 password_col=password_col,
@@ -195,7 +197,7 @@ def login_form(
                 guest_cfg = GuestLoginConfig(submit_label=guest_submit_label)
                 _handle_guest_login(cfg=guest_cfg)
 
-        return connection if st.session_state["authenticated"] else None
+        return supabase_connection if st.session_state["authenticated"] else None
 
 
 def hash_current_passwords(
@@ -217,12 +219,12 @@ def hash_current_passwords(
     from st_supabase_connection import execute_query
 
     # Initialize the Supabase connection
-    connection = st.connection(name="supabase", type=SupabaseConnection)
+    supabase_connection = st.connection(name="supabase", type=SupabaseConnection)
     auth = _Authenticator()
 
     # Select usernames and plaintext passwords from the specified table
     plaintext_passwords = execute_query(
-        connection.table(user_tablename)
+        supabase_connection.table(user_tablename)
         .select(f"{username_col}, {password_col}")
         .not_.like(password_col, "$argon2id$%")
     ).data
@@ -234,7 +236,9 @@ def hash_current_passwords(
             pair[password_col] = auth.generate_pwd_hash(pair[password_col])
             updates.append({username_col: pair[username_col], password_col: pair[password_col]})
 
-        connection.table(user_tablename).upsert(updates, on_conflict=username_col).execute()
+        supabase_connection.table(user_tablename).upsert(
+            updates, on_conflict=username_col
+        ).execute()
 
         st.success("All passwords hashed successfully.", icon=":material/lock:")
     else:

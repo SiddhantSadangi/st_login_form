@@ -78,7 +78,7 @@ try:
         st.write("2. Import")
         st.code("from st_login_form import login_form", language="python")
         st.write("3. Use")
-        st.code("connection = login_form()", language="python")
+        st.code("supabase_connection = login_form()", language="python")
         st.info(
             "Detailed installation instructions [here](https://github.com/SiddhantSadangi/st_login_form?tab=readme-ov-file#building_construction-installation)."
         )
@@ -92,7 +92,7 @@ try:
     ):
         st.code(inspect.getdoc(st_login_form.login_form), language="docstring")
 
-    connection = st_login_form.login_form(user_tablename="demo_users")
+    supabase_connection = st_login_form.login_form(user_tablename="demo_users")
 
     st.write(
         "On authentication, `login_form()` sets `st.session_state['authenticated']` to `True`. This also collapses and disables the login form."
