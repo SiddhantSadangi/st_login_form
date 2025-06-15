@@ -14,7 +14,7 @@ from ._helpers.forms import (
 
 __version__ = "1.3.0"
 
-__all__ = ["login_form"]
+__all__ = ["login_form", "hash_current_passwords"]
 
 
 def login_form(
@@ -164,6 +164,49 @@ def login_form(
                 )
 
         return client
+
+
+def hash_current_passwords(
+    user_tablename: str = "users",
+    username_col: str = "username",
+    password_col: str = "password",
+) -> None:
+    """
+    Hashes all current plaintext passwords stored in a database table (in-place).
+
+    Args:
+        user_tablename (str, optional): The name of the user table. Defaults to "users".
+        username_col (str, optional): The column name for usernames. Defaults to "username".
+        password_col (str, optional): The column name for passwords. Defaults to "password".
+
+    Returns:
+        None
+    """
+    from st_supabase_connection import execute_query
+
+    # Initialize the Supabase connection
+    client = st.connection(name="supabase", type=SupabaseConnection)
+    auth = _Authenticator()
+
+    # Select usernames and plaintext passwords from the specified table
+    plaintext_passwords = execute_query(
+        client.table(user_tablename)
+        .select(f"{username_col}, {password_col}")
+        .not_.like(password_col, "$argon2id$%")
+    ).data
+
+    if len(plaintext_passwords) > 0:
+        st.warning(f"Hashing {len(plaintext_passwords)} plaintext passwords.")
+        updates = []
+        for pair in plaintext_passwords:
+            pair[password_col] = auth.generate_pwd_hash(pair[password_col])
+            updates.append({username_col: pair[username_col], password_col: pair[password_col]})
+
+        client.table(user_tablename).upsert(updates).execute()
+
+        st.success("All passwords hashed successfully.", icon=":material/lock:")
+    else:
+        st.success("All passwords are already hashed.", icon=":material/lock:")
 
 
 if __name__ == "__main__":

@@ -102,8 +102,9 @@ To bulk-update all existing plaintext passwords in the table, use the `hash_curr
 - `login_form()`
 
   ```python
-    def login_form(
+  def login_form(
       *,
+      client: Optional[Client] = None,
       title: str = "Authentication",
       icon: str = ":material/lock:",
       user_tablename: str = "users",
@@ -129,17 +130,19 @@ To bulk-update all existing plaintext passwords in the table, use the `hash_curr
       login_password_placeholder: str = None,
       login_password_help: str = None,
       login_submit_label: str = ":material/login: Login",
-      login_error_message: str = ":material/lock: Wrong username/password",
+      login_error_message: str = ":material/error: Wrong username/password",
       password_constraint_check_fail_message: str = ":material/warning: Password must contain at least 8 characters, including one uppercase letter, one lowercase letter, one number, and one special character (`@$!%*?&_^#- `).",
       guest_submit_label: str = ":material/visibility_off: Guest login",
   ) -> Client:
-      """Creates a user login form in Streamlit apps.
+      """
+      Creates a user login form in Streamlit apps.
 
-      Connects to a Supabase DB using `SUPABASE_URL` and `SUPABASE_KEY` Streamlit secrets.
+      Connects to a Supabase DB using `SUPABASE_URL` and `SUPABASE_KEY` Streamlit secrets, unless a client is provided.
       Sets `session_state["authenticated"]` to True if the login is successful.
       Sets `session_state["username"]` to provided username or new or existing user, and to `None` for guest login.
 
-      Arguments:
+      Args:
+          client (Optional[Client]): An optional Supabase client instance. If not provided, one will be created.
           title (str): The title of the login form. Default is "Authentication".
           icon (str): The icon to display next to the title. Default is ":material/lock:".
           user_tablename (str): The name of the table in the database that stores user information. Default is "users".
@@ -165,13 +168,12 @@ To bulk-update all existing plaintext passwords in the table, use the `hash_curr
           login_password_placeholder (str): The placeholder text for the login password input field. Default is None.
           login_password_help (str): The help text for the login password input field. Default is None.
           login_submit_label (str): The label for the login submit button. Default is ":material/login: Login".
-          login_error_message (str): The error message displayed when the username or password is incorrect. Default is ":material/lock: Wrong username/password".
+          login_error_message (str): The error message displayed when the username or password is incorrect. Default is ":material/error: Wrong username/password".
           password_constraint_check_fail_message (str): The error message displayed when the password does not meet the constraints. Default is ":material/warning: Password must contain at least 8 characters, including one uppercase letter, one lowercase letter, one number, and one special character (`@$!%*?&_^#- `).".
           guest_submit_label (str): The label for the guest login button. Default is ":material/visibility_off: Guest login".
 
       Returns:
-          Supabase.client: The client instance for performing downstream supabase operations.
-      """
+          Client: The Supabase client instance for performing downstream supabase operations.
   ```
 
 - `hash_current_passwords()`
@@ -182,7 +184,17 @@ To bulk-update all existing plaintext passwords in the table, use the `hash_curr
       username_col: str = "username",
       password_col: str = "password",
   ) -> None:
-      """Hashes all current plaintext passwords stored in a database table (in-place)."""
+      """
+      Hashes all current plaintext passwords stored in a database table (in-place).
+
+      Args:
+          user_tablename (str, optional): The name of the user table. Defaults to "users".
+          username_col (str, optional): The column name for usernames. Defaults to "username".
+          password_col (str, optional): The column name for passwords. Defaults to "password".
+
+      Returns:
+          None
+      """
   ```
 
 ## :framed_picture: Gallery
