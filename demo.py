@@ -89,7 +89,7 @@ try:
         icon=":material/lightbulb:",
         expanded=False,
     ):
-        st.write(st_login_form.login_form.__doc__)
+        st.code(st_login_form.login_form.__doc__, language="docstring")
 
     client = st_login_form.login_form(user_tablename="demo_users")
 

@@ -4,14 +4,17 @@ import streamlit as st
 from st_supabase_connection import SupabaseConnection
 from supabase import Client
 
-from .auth import (
-    Authenticator,
-    reset_authentication,
-    set_authenticated,
-    validate_password,
+from ._helpers.auth import _Authenticator, _reset_authentication
+from ._helpers.forms import (
+    _get_tabs,
+    _handle_create_account,
+    _handle_guest_login,
+    _handle_login,
 )
 
 __version__ = "1.3.0"
+
+__all__ = ["login_form"]
 
 
 def login_form(
@@ -42,7 +45,7 @@ def login_form(
     login_password_placeholder: str = None,
     login_password_help: str = None,
     login_submit_label: str = ":material/login: Login",
-    login_error_message: str = ":material/lock: Wrong username/password",
+    login_error_message: str = ":material/error: Wrong username/password",
     password_constraint_check_fail_message: str = ":material/warning: Password must contain at least 8 characters, including one uppercase letter, one lowercase letter, one number, and one special character (`@$!%*?&_^#- `).",
     guest_submit_label: str = ":material/visibility_off: Guest login",
 ) -> Client:
@@ -55,34 +58,34 @@ def login_form(
 
     Args:
         client (Optional[Client]): An optional Supabase client instance. If not provided, one will be created.
-        title (str): The title of the login form.
-        icon (str): The icon to display next to the title.
-        user_tablename (str): The name of the table in the database that stores user information.
-        username_col (str): The name of the column in the user table that stores usernames.
-        password_col (str): The name of the column in the user table that stores passwords.
-        constrain_password (bool): Whether to enforce password constraints.
-        create_title (str): The title of the create new account tab.
-        login_title (str): The title of the login to existing account tab.
-        allow_guest (bool): Whether to allow guest login.
-        allow_create (bool): Whether to allow creating new accounts.
-        guest_title (str): The title of the guest login tab.
-        create_username_label (str): The label for the create username input field.
-        create_username_placeholder (str): The placeholder text for the create username input field.
-        create_username_help (str): The help text for the create username input field.
-        create_password_label (str): The label for the create password input field.
-        create_password_placeholder (str): The placeholder text for the create password input field.
-        create_password_help (str): The help text for the create password input field.
-        create_submit_label (str): The label for the create account submit button.
-        login_username_label (str): The label for the login username input field.
-        login_username_placeholder (str): The placeholder text for the login username input field.
-        login_username_help (str): The help text for the login username input field.
-        login_password_label (str): The label for the login password input field.
-        login_password_placeholder (str): The placeholder text for the login password input field.
-        login_password_help (str): The help text for the login password input field.
-        login_submit_label (str): The label for the login submit button.
-        login_error_message (str): The error message displayed when the username or password is incorrect.
-        password_constraint_check_fail_message (str): The error message displayed when the password does not meet the constraints.
-        guest_submit_label (str): The label for the guest login button.
+        title (str): The title of the login form. Default is "Authentication".
+        icon (str): The icon to display next to the title. Default is ":material/lock:".
+        user_tablename (str): The name of the table in the database that stores user information. Default is "users".
+        username_col (str): The name of the column in the user table that stores usernames. Default is "username".
+        password_col (str): The name of the column in the user table that stores passwords. Default is "password".
+        constrain_password (bool): Whether to enforce password constraints (at least 8 characters, including one uppercase letter, one lowercase letter, one number, and one special character (`@$!%*?&_^#- `)). Default is True.
+        create_title (str): The title of the create new account tab. Default is ":material/add_circle: Create new account".
+        login_title (str): The title of the login to existing account tab. Default is ":material/login: Login to existing account".
+        allow_guest (bool): Whether to allow guest login. Default is True.
+        allow_create (bool): Whether to allow creating new accounts. Default is True.
+        guest_title (str): The title of the guest login tab. Default is ":material/visibility_off: Guest login".
+        create_username_label (str): The label for the create username input field. Default is "Create a unique username".
+        create_username_placeholder (str): The placeholder text for the create username input field. Default is None.
+        create_username_help (str): The help text for the create username input field. Default is None.
+        create_password_label (str): The label for the create password input field. Default is "Create a password".
+        create_password_placeholder (str): The placeholder text for the create password input field. Default is None.
+        create_password_help (str): The help text for the create password input field. Default is ":material/warning: Password cannot be recovered if lost".
+        create_submit_label (str): The label for the create account submit button. Default is ":material/add_circle: Create account".
+        login_username_label (str): The label for the login username input field. Default is "Enter your unique username".
+        login_username_placeholder (str): The placeholder text for the login username input field. Default is None.
+        login_username_help (str): The help text for the login username input field. Default is None.
+        login_password_label (str): The label for the login password input field. Default is "Enter your password".
+        login_password_placeholder (str): The placeholder text for the login password input field. Default is None.
+        login_password_help (str): The help text for the login password input field. Default is None.
+        login_submit_label (str): The label for the login submit button. Default is ":material/login: Login".
+        login_error_message (str): The error message displayed when the username or password is incorrect. Default is ":material/error: Wrong username/password".
+        password_constraint_check_fail_message (str): The error message displayed when the password does not meet the constraints. Default is ":material/warning: Password must contain at least 8 characters, including one uppercase letter, one lowercase letter, one number, and one special character (`@$!%*?&_^#- `).".
+        guest_submit_label (str): The label for the guest login button. Default is ":material/visibility_off: Guest login".
 
     Returns:
         Client: The Supabase client instance for performing downstream supabase operations.
@@ -101,150 +104,65 @@ def login_form(
 
     if client is None:
         client = st.connection(name="supabase", type=SupabaseConnection)
-    auth = Authenticator()
-
-    def rehash_pwd_in_db(password, username) -> str:
-        """A procedure to rehash given password in the db if necessary."""
-        hashed_password = auth.generate_pwd_hash(password)
-        client.table(user_tablename).update({password_col: hashed_password}).match(
-            {username_col: username}
-        ).execute()
-
-        return hashed_password
+    auth = _Authenticator()
 
     # User Authentication
     if "authenticated" not in st.session_state:
-        reset_authentication()
+        _reset_authentication()
 
     if "username" not in st.session_state:
         st.session_state["username"] = None
 
     with st.expander(title, icon=icon, expanded=not st.session_state["authenticated"]):
-        if allow_guest:
-            if allow_create:
-                create_tab, login_tab, guest_tab = st.tabs(
-                    [
-                        create_title,
-                        login_title,
-                        guest_title,
-                    ]
-                )
-            else:
-                login_tab, guest_tab = st.tabs([login_title, guest_title])
-        elif allow_create:
-            create_tab, login_tab = st.tabs(
-                [
-                    create_title,
-                    login_title,
-                ]
-            )
-        else:
-            login_tab = st.container()
+        create_tab, login_tab, guest_tab = _get_tabs(
+            allow_create, allow_guest, create_title, login_title, guest_title
+        )
 
         # Create new account
         if allow_create:
             with create_tab:
-                with st.form(key="create"):
-                    username = st.text_input(
-                        label=create_username_label,
-                        placeholder=create_username_placeholder,
-                        help=create_username_help,
-                        disabled=st.session_state["authenticated"],
-                    )
-
-                    password = st.text_input(
-                        label=create_password_label,
-                        placeholder=create_password_placeholder,
-                        help=create_password_help,
-                        type="password",
-                        disabled=st.session_state["authenticated"],
-                    )
-                    hashed_password = auth.generate_pwd_hash(password)
-                    if st.form_submit_button(
-                        label=create_submit_label,
-                        type="primary",
-                        disabled=st.session_state["authenticated"],
-                        use_container_width=True,
-                    ):
-                        if constrain_password and not validate_password(password):
-                            st.error(password_constraint_check_fail_message)
-                            st.stop()
-
-                        try:
-                            client.table(user_tablename).insert(
-                                {username_col: username, password_col: hashed_password}
-                            ).execute()
-                        except Exception as e:
-                            st.error(str(e))
-                            reset_authentication()
-                        else:
-                            set_authenticated(username)
-                            st.rerun()
+                _handle_create_account(
+                    auth=auth,
+                    client=client,
+                    user_tablename=user_tablename,
+                    username_col=username_col,
+                    password_col=password_col,
+                    create_username_label=create_username_label,
+                    create_username_placeholder=create_username_placeholder,
+                    create_username_help=create_username_help,
+                    create_password_label=create_password_label,
+                    create_password_placeholder=create_password_placeholder,
+                    create_password_help=create_password_help,
+                    create_submit_label=create_submit_label,
+                    constrain_password=constrain_password,
+                    password_constraint_check_fail_message=password_constraint_check_fail_message,
+                )
 
         # Login to existing account
         with login_tab:
-            with st.form(key="login"):
-                username = st.text_input(
-                    label=login_username_label,
-                    placeholder=login_username_placeholder,
-                    help=login_username_help,
-                    disabled=st.session_state["authenticated"],
-                )
-
-                password = st.text_input(
-                    label=login_password_label,
-                    placeholder=login_password_placeholder,
-                    help=login_password_help,
-                    type="password",
-                    disabled=st.session_state["authenticated"],
-                )
-
-                if st.form_submit_button(
-                    label=login_submit_label,
-                    disabled=st.session_state["authenticated"],
-                    type="primary",
-                    use_container_width=True,
-                ):
-                    response = (
-                        client.table(user_tablename)
-                        .select(f"{username_col}, {password_col}")
-                        .eq(username_col, username)
-                        .execute()
-                    )
-
-                    if len(response.data) > 0:
-                        db_password = response.data[0]["password"]
-
-                        if not db_password.startswith("$argon2id$"):
-                            # Hash plaintext password and update the db
-                            db_password = rehash_pwd_in_db(db_password, username)
-
-                        if auth.verify_password(db_password, password):
-                            # Verify hashed password
-                            set_authenticated(username)
-                            # This step is recommended by the argon2-cffi documentation
-                            if auth.check_needs_rehash(db_password):
-                                _ = rehash_pwd_in_db(password, username)
-                            st.rerun()
-                        else:
-                            st.error(login_error_message)
-                            reset_authentication()
-
-                    else:
-                        st.error(login_error_message)
-                        reset_authentication()
+            _handle_login(
+                auth=auth,
+                client=client,
+                user_tablename=user_tablename,
+                username_col=username_col,
+                password_col=password_col,
+                login_username_label=login_username_label,
+                login_username_placeholder=login_username_placeholder,
+                login_username_help=login_username_help,
+                login_password_label=login_password_label,
+                login_password_placeholder=login_password_placeholder,
+                login_password_help=login_password_help,
+                login_submit_label=login_submit_label,
+                login_error_message=login_error_message,
+            )
 
         # Guest login
         if allow_guest:
             with guest_tab:
-                if st.button(
-                    label=guest_submit_label,
-                    type="primary",
-                    disabled=st.session_state["authenticated"],
-                    use_container_width=True,
-                ):
-                    set_authenticated()
-                    st.rerun()
+                _handle_guest_login(
+                    guest_submit_label=guest_submit_label,
+                )
+
         return client
 
 

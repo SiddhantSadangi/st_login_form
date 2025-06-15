@@ -50,6 +50,5 @@ It lets users create a new username and password, login to an existing account, 
         "jinja2>=3.1.6,<4.0.0",
         "st_supabase_connection>=2.0",
         "argon2-cffi>=23.1.0,<24.0.0",
-        "stqdm>=0.0.5,<1.0.0",
     ],
 )
