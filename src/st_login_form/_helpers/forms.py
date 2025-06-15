@@ -1,26 +1,74 @@
+from dataclasses import dataclass
+
 import streamlit as st
 
 from .auth import _reset_authentication, _set_authenticated, _validate_password
 
 
+@dataclass
+class FieldConfig:
+    label: str
+    placeholder: str = None
+    help: str = None
+    type: str = "text"
+
+
+@dataclass
+class CreateAccountConfig:
+    username: FieldConfig
+    password: FieldConfig
+    submit_label: str
+    constrain_password: bool
+    password_fail_message: str
+    create_retype_password_label: str
+    create_retype_password_placeholder: str
+    create_retype_password_help: str
+
+
+@dataclass
+class LoginFormConfig:
+    username: FieldConfig
+    password: FieldConfig
+    submit_label: str
+    error_message: str
+
+
+@dataclass
+class GuestLoginConfig:
+    submit_label: str
+
+
 def _get_tabs(allow_create, allow_guest, create_title, login_title, guest_title):
-    tab_titles = []
+    # 1) collect only the enabled actions
+    options = []
     if allow_create:
-        tab_titles.append(create_title)
-    tab_titles.append(login_title)
+        options.append(("create", create_title))
+    options.append(("login", login_title))
     if allow_guest:
-        tab_titles.append(guest_title)
-    if len(tab_titles) <= 1:
+        options.append(("guest", guest_title))
+
+    # 2) early exit if there's only one pane
+    if len(options) <= 1:
         return None, st.container(), None
-    tabs = st.tabs(tab_titles)
-    idx = 0
-    if allow_create:
-        create_tab = tabs[idx]
-        idx += 1
-    login_tab = tabs[idx]
-    idx += 1
-    guest_tab = tabs[idx] if allow_guest else None
-    return create_tab if allow_create else None, login_tab, guest_tab
+
+    # 3) render and zip into a dict
+    keys, titles = zip(*options)
+    tabs = dict(zip(keys, st.tabs(titles)))
+
+    # 4) return in fixed order
+    return tabs.get("create"), tabs["login"], tabs.get("guest")
+
+
+def _render_input(field: FieldConfig, disabled: bool):
+    kwargs = {
+        "label": field.label,
+        "placeholder": field.placeholder,
+        "help": field.help,
+        "disabled": disabled,
+    }
+    if field.type != "text":
+        kwargs["type"] = field.type
+    return st.text_input(**kwargs)
 
 
 def _handle_create_account(
@@ -29,43 +77,41 @@ def _handle_create_account(
     user_tablename,
     username_col,
     password_col,
-    create_username_label,
-    create_username_placeholder,
-    create_username_help,
-    create_password_label,
-    create_password_placeholder,
-    create_password_help,
-    create_submit_label,
-    constrain_password,
-    password_constraint_check_fail_message,
+    cfg: CreateAccountConfig,
 ):
     with st.form(key="create"):
-        username = st.text_input(
-            label=create_username_label,
-            placeholder=create_username_placeholder,
-            help=create_username_help,
-            disabled=st.session_state["authenticated"],
+        username = _render_input(cfg.username, disabled=st.session_state["authenticated"])
+        password_field = FieldConfig(**{**cfg.password.__dict__, "type": "password"})
+        password = _render_input(password_field, disabled=st.session_state["authenticated"])
+        retype_password_field = FieldConfig(
+            **{
+                **password_field.__dict__,
+                "type": "password",
+                "label": cfg.create_retype_password_label,
+                "placeholder": cfg.create_retype_password_placeholder,
+                "help": cfg.create_retype_password_help,
+            }
+        )
+        retype_password = _render_input(
+            retype_password_field, disabled=st.session_state["authenticated"]
         )
 
-        password = st.text_input(
-            label=create_password_label,
-            placeholder=create_password_placeholder,
-            help=create_password_help,
-            type="password",
-            disabled=st.session_state["authenticated"],
-        )
-        hashed_password = auth.generate_pwd_hash(password)
         if st.form_submit_button(
-            label=create_submit_label,
+            label=cfg.submit_label,
             type="primary",
             disabled=st.session_state["authenticated"],
             use_container_width=True,
         ):
-            if constrain_password and not _validate_password(password):
-                st.error(password_constraint_check_fail_message)
+            if password != retype_password:
+                st.error("Passwords do not match")
+                st.stop()
+
+            if cfg.constrain_password and not _validate_password(password):
+                st.error(cfg.password_fail_message)
                 st.stop()
 
             try:
+                hashed_password = auth.generate_pwd_hash(password)
                 client.table(user_tablename).insert(
                     {username_col: username, password_col: hashed_password}
                 ).execute()
@@ -83,86 +129,70 @@ def _handle_login(
     user_tablename,
     username_col,
     password_col,
-    login_username_label,
-    login_username_placeholder,
-    login_username_help,
-    login_password_label,
-    login_password_placeholder,
-    login_password_help,
-    login_submit_label,
-    login_error_message,
+    cfg: LoginFormConfig,
 ):
     with st.form(key="login"):
-        username = st.text_input(
-            label=login_username_label,
-            placeholder=login_username_placeholder,
-            help=login_username_help,
-            disabled=st.session_state["authenticated"],
-        )
-
-        password = st.text_input(
-            label=login_password_label,
-            placeholder=login_password_placeholder,
-            help=login_password_help,
-            type="password",
-            disabled=st.session_state["authenticated"],
-        )
+        username = _render_input(cfg.username, disabled=st.session_state["authenticated"])
+        password_field = FieldConfig(**{**cfg.password.__dict__, "type": "password"})
+        password = _render_input(password_field, disabled=st.session_state["authenticated"])
 
         if st.form_submit_button(
-            label=login_submit_label,
+            label=cfg.submit_label,
             disabled=st.session_state["authenticated"],
             type="primary",
             use_container_width=True,
         ):
-            response = (
-                client.table(user_tablename)
-                .select(f"{username_col}, {password_col}")
-                .eq(username_col, username)
-                .execute()
-            )
+            try:
+                response = (
+                    client.table(user_tablename)
+                    .select(f"{username_col}, {password_col}")
+                    .eq(username_col, username)
+                    .execute()
+                )
+            except Exception as e:
+                st.error(str(e))
+                _reset_authentication()
+            else:
+                if len(response.data) > 0:
+                    db_password = response.data[0][password_col]
 
-            if len(response.data) > 0:
-                db_password = response.data[0]["password"]
-
-                if not db_password.startswith("$argon2id$"):
-                    # Hash plaintext password and update the db
-                    db_password = auth.rehash_pwd_in_db(
-                        password=db_password,
-                        username=username,
-                        client=client,
-                        user_tablename=user_tablename,
-                        password_col=password_col,
-                        username_col=username_col,
-                    )
-
-                if auth.verify_password(db_password, password):
-                    # Verify hashed password
-                    _set_authenticated(username)
-                    # This step is recommended by the argon2-cffi documentation
-                    if auth.check_needs_rehash(db_password):
-                        _ = auth.rehash_pwd_in_db(
-                            password=password,
+                    if not db_password.startswith("$argon2id$"):
+                        # Hash plaintext password and update the db
+                        db_password = auth.rehash_pwd_in_db(
+                            password=db_password,
                             username=username,
                             client=client,
                             user_tablename=user_tablename,
                             password_col=password_col,
                             username_col=username_col,
                         )
-                    st.rerun()
+
+                    if auth.verify_password(db_password, password):
+                        # Verify hashed password
+                        _set_authenticated(username)
+                        # This step is recommended by the argon2-cffi documentation
+                        if auth.check_needs_rehash(db_password):
+                            _ = auth.rehash_pwd_in_db(
+                                password=password,
+                                username=username,
+                                client=client,
+                                user_tablename=user_tablename,
+                                password_col=password_col,
+                                username_col=username_col,
+                            )
+                        st.rerun()
+                    else:
+                        st.error(cfg.error_message)
+                        _reset_authentication()
+
                 else:
-                    st.error(login_error_message)
+                    st.error(cfg.error_message)
                     _reset_authentication()
 
-            else:
-                st.error(login_error_message)
-                _reset_authentication()
 
-
-def _handle_guest_login(
-    guest_submit_label,
-):
+def _handle_guest_login(cfg: GuestLoginConfig):
     if st.button(
-        label=guest_submit_label,
+        label=cfg.submit_label,
         type="primary",
         disabled=st.session_state["authenticated"],
         use_container_width=True,

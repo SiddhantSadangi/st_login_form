@@ -6,6 +6,10 @@ from supabase import Client
 
 from ._helpers.auth import _Authenticator, _reset_authentication
 from ._helpers.forms import (
+    CreateAccountConfig,
+    FieldConfig,
+    GuestLoginConfig,
+    LoginFormConfig,
     _get_tabs,
     _handle_create_account,
     _handle_guest_login,
@@ -37,6 +41,9 @@ def login_form(
     create_password_label: str = "Create a password",
     create_password_placeholder: str = None,
     create_password_help: str = ":material/warning: Password cannot be recovered if lost",
+    create_retype_password_label: str = "Retype password",
+    create_retype_password_placeholder: str = None,
+    create_retype_password_help: str = None,
     create_submit_label: str = ":material/add_circle: Create account",
     login_username_label: str = "Enter your unique username",
     login_username_placeholder: str = None,
@@ -75,6 +82,9 @@ def login_form(
         create_password_label (str): The label for the create password input field. Default is "Create a password".
         create_password_placeholder (str): The placeholder text for the create password input field. Default is None.
         create_password_help (str): The help text for the create password input field. Default is ":material/warning: Password cannot be recovered if lost".
+        create_retype_password_label (str): The label for the create retype password input field. Default is "Retype password".
+        create_retype_password_placeholder (str): The placeholder text for the create retype password input field. Default is None.
+        create_retype_password_help (str): The help text for the create retype password input field. Default is None.
         create_submit_label (str): The label for the create account submit button. Default is ":material/add_circle: Create account".
         login_username_label (str): The label for the login username input field. Default is "Enter your unique username".
         login_username_placeholder (str): The placeholder text for the login username input field. Default is None.
@@ -121,47 +131,63 @@ def login_form(
         # Create new account
         if allow_create:
             with create_tab:
+                create_cfg = CreateAccountConfig(
+                    username=FieldConfig(
+                        label=create_username_label,
+                        placeholder=create_username_placeholder,
+                        help=create_username_help,
+                    ),
+                    password=FieldConfig(
+                        label=create_password_label,
+                        placeholder=create_password_placeholder,
+                        help=create_password_help,
+                    ),
+                    submit_label=create_submit_label,
+                    constrain_password=constrain_password,
+                    password_fail_message=password_constraint_check_fail_message,
+                    create_retype_password_label=create_retype_password_label,
+                    create_retype_password_placeholder=create_retype_password_placeholder,
+                    create_retype_password_help=create_retype_password_help,
+                )
                 _handle_create_account(
                     auth=auth,
                     client=client,
                     user_tablename=user_tablename,
                     username_col=username_col,
                     password_col=password_col,
-                    create_username_label=create_username_label,
-                    create_username_placeholder=create_username_placeholder,
-                    create_username_help=create_username_help,
-                    create_password_label=create_password_label,
-                    create_password_placeholder=create_password_placeholder,
-                    create_password_help=create_password_help,
-                    create_submit_label=create_submit_label,
-                    constrain_password=constrain_password,
-                    password_constraint_check_fail_message=password_constraint_check_fail_message,
+                    cfg=create_cfg,
                 )
 
         # Login to existing account
         with login_tab:
+            login_cfg = LoginFormConfig(
+                username=FieldConfig(
+                    label=login_username_label,
+                    placeholder=login_username_placeholder,
+                    help=login_username_help,
+                ),
+                password=FieldConfig(
+                    label=login_password_label,
+                    placeholder=login_password_placeholder,
+                    help=login_password_help,
+                ),
+                submit_label=login_submit_label,
+                error_message=login_error_message,
+            )
             _handle_login(
                 auth=auth,
                 client=client,
                 user_tablename=user_tablename,
                 username_col=username_col,
                 password_col=password_col,
-                login_username_label=login_username_label,
-                login_username_placeholder=login_username_placeholder,
-                login_username_help=login_username_help,
-                login_password_label=login_password_label,
-                login_password_placeholder=login_password_placeholder,
-                login_password_help=login_password_help,
-                login_submit_label=login_submit_label,
-                login_error_message=login_error_message,
+                cfg=login_cfg,
             )
 
         # Guest login
         if allow_guest:
             with guest_tab:
-                _handle_guest_login(
-                    guest_submit_label=guest_submit_label,
-                )
+                guest_cfg = GuestLoginConfig(submit_label=guest_submit_label)
+                _handle_guest_login(cfg=guest_cfg)
 
         return client
 

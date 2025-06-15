@@ -46,9 +46,9 @@ It lets users create a new username and password, login to an existing account, 
     keywords=["streamlit", "login", "authentication", "supabase"],
     python_requires=">=3.9",
     install_requires=[
-        "streamlit>=1.2,<2.0",
-        "jinja2>=3.1.6,<4.0.0",
+        "streamlit>=1.2",
+        "jinja2>=3.1.6",
         "st_supabase_connection>=2.0",
-        "argon2-cffi>=23.1.0,<24.0.0",
+        "argon2-cffi>=23.1.0",
     ],
 )

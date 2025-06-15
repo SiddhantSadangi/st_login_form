@@ -122,6 +122,9 @@ To bulk-update all existing plaintext passwords in the table, use the `hash_curr
       create_password_label: str = "Create a password",
       create_password_placeholder: str = None,
       create_password_help: str = ":material/warning: Password cannot be recovered if lost",
+      create_retype_password_label: str = "Retype password",
+      create_retype_password_placeholder: str = None,
+      create_retype_password_help: str = None,
       create_submit_label: str = ":material/add_circle: Create account",
       login_username_label: str = "Enter your unique username",
       login_username_placeholder: str = None,
@@ -160,6 +163,9 @@ To bulk-update all existing plaintext passwords in the table, use the `hash_curr
           create_password_label (str): The label for the create password input field. Default is "Create a password".
           create_password_placeholder (str): The placeholder text for the create password input field. Default is None.
           create_password_help (str): The help text for the create password input field. Default is ":material/warning: Password cannot be recovered if lost".
+          create_retype_password_label (str): The label for the create retype password input field. Default is "Retype password".
+          create_retype_password_placeholder (str): The placeholder text for the create retype password input field. Default is None.
+          create_retype_password_help (str): The help text for the create retype password input field. Default is None.
           create_submit_label (str): The label for the create account submit button. Default is ":material/add_circle: Create account".
           login_username_label (str): The label for the login username input field. Default is "Enter your unique username".
           login_username_placeholder (str): The placeholder text for the login username input field. Default is None.
@@ -209,7 +215,6 @@ Here are some features that are planned for future releases across the library a
 
 ### Library Features
 - [ ] Add `init()` method to create required database tables
-- [ ] Add retype password for confirmation while signing up
 - [ ] Customize password constraints (minimum length, allowed characters, etc.)
 - [ ] Add logout option
 - [ ] Capture additional login metadata - created_at, last_login_at, num_logins, etc.
