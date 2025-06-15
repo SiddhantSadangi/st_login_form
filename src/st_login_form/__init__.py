@@ -234,7 +234,7 @@ def hash_current_passwords(
             pair[password_col] = auth.generate_pwd_hash(pair[password_col])
             updates.append({username_col: pair[username_col], password_col: pair[password_col]})
 
-        connection.table(user_tablename).upsert(updates).execute()
+        connection.table(user_tablename).upsert(updates, on_conflict=username_col).execute()
 
         st.success("All passwords hashed successfully.", icon=":material/lock:")
     else:

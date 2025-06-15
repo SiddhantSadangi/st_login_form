@@ -1,19 +1,20 @@
-from dataclasses import dataclass
+import dataclasses
+from typing import Optional
 
 import streamlit as st
 
 from .auth import _reset_authentication, _set_authenticated, _validate_password
 
 
-@dataclass
+@dataclasses.dataclass
 class FieldConfig:
     label: str
-    placeholder: str = None
-    help: str = None
+    placeholder: Optional[str] = None
+    help: Optional[str] = None
     type: str = "text"
 
 
-@dataclass
+@dataclasses.dataclass
 class CreateAccountConfig:
     username: FieldConfig
     password: FieldConfig
@@ -25,7 +26,7 @@ class CreateAccountConfig:
     create_retype_password_help: str
 
 
-@dataclass
+@dataclasses.dataclass
 class LoginFormConfig:
     username: FieldConfig
     password: FieldConfig
@@ -33,7 +34,7 @@ class LoginFormConfig:
     error_message: str
 
 
-@dataclass
+@dataclasses.dataclass
 class GuestLoginConfig:
     submit_label: str
 
@@ -83,14 +84,12 @@ def _handle_create_account(
         username = _render_input(cfg.username, disabled=st.session_state["authenticated"])
         password_field = FieldConfig(**{**cfg.password.__dict__, "type": "password"})
         password = _render_input(password_field, disabled=st.session_state["authenticated"])
-        retype_password_field = FieldConfig(
-            **{
-                **password_field.__dict__,
-                "type": "password",
-                "label": cfg.create_retype_password_label,
-                "placeholder": cfg.create_retype_password_placeholder,
-                "help": cfg.create_retype_password_help,
-            }
+        retype_password_field = dataclasses.replace(
+            password_field,
+            type="password",
+            label=cfg.create_retype_password_label,
+            placeholder=cfg.create_retype_password_placeholder,
+            help=cfg.create_retype_password_help,
         )
         retype_password = _render_input(
             retype_password_field, disabled=st.session_state["authenticated"]
@@ -118,6 +117,7 @@ def _handle_create_account(
             except Exception as e:
                 st.error(str(e))
                 _reset_authentication()
+                st.stop()
             else:
                 _set_authenticated(username)
                 st.rerun()
