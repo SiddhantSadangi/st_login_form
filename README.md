@@ -72,7 +72,7 @@ pip install st-login-form
 
 ## :pen: Usage
 
-On authentication, `login_form()` sets the `st.session_state['authenticated']` to `True`, and replaces the login form with a logout button.  
+On authentication, `login_form()` sets the `st.session_state['authenticated']` to `True`, and replaces the login form with a logout button.
 `st.session_state['username']` is set to the provided username for a new or existing user, and to `None` for guest login.
 
 ```python
