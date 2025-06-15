@@ -91,6 +91,21 @@ def _submit_form(
     return submitted, values
 
 
+def _get_validated_inputs(
+    form_key: str,
+    fields: dict[str, FieldConfig],
+    submit_label: str,
+    disabled: bool,
+) -> Optional[dict[str, str]]:
+    submitted, inputs = _submit_form(form_key, fields, submit_label, disabled)
+    if not submitted:
+        return None
+    if missing := [name for name, val in inputs.items() if not val]:
+        st.error(f"Please fill in all fields: {', '.join(missing)}", icon=":material/warning:")
+        st.stop()
+    return inputs
+
+
 def _handle_create_account(
     auth,
     client,
@@ -112,14 +127,11 @@ def _handle_create_account(
         ),
     }
 
-    submitted, inputs = _submit_form("create", fields, cfg.submit_label, disabled)
-    if not submitted:
+    inputs = _get_validated_inputs("create", fields, cfg.submit_label, disabled)
+    if inputs is None:
         return
 
     username, password, retype = inputs["username"], inputs["password"], inputs["retype"]
-    if not (username and password and retype):
-        st.error("Please fill in all fields", icon=":material/warning:")
-        st.stop()
     if password != retype:
         st.error(cfg.password_mismatch_message, icon=":material/warning:")
         st.stop()
@@ -153,8 +165,8 @@ def _handle_login(
         "password": dataclasses.replace(cfg.password, type="password"),
     }
 
-    submitted, inputs = _submit_form("login", fields, cfg.submit_label, disabled)
-    if not submitted:
+    inputs = _get_validated_inputs("login", fields, cfg.submit_label, disabled)
+    if inputs is None:
         return
 
     username, password = inputs["username"], inputs["password"]
