@@ -95,7 +95,7 @@ try:
     supabase_connection = st_login_form.login_form(user_tablename="demo_users")
 
     st.write(
-        "On authentication, `login_form()` sets `st.session_state['authenticated']` to `True`. This also collapses and disables the login form."
+        "On authentication, `login_form()` sets `st.session_state['authenticated']` to `True`, and replaces the login form with a logout button."
     )
     st.write(
         "`st.session_state['username']` is set to the provided username for a new or existing user, and to `None` for guest login."

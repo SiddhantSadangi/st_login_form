@@ -19,12 +19,16 @@
 </div>
 
 ## :rocket: Features
-- One-line authentication frontend  
-- Password hashing using the award-winning [Argon2](https://github.com/p-h-c/phc-winner-argon2) algorithm  
-- Inbuilt password constraint checks
-- Create new account, login to existing account, or login as guest
-- Hash existing plaintext passwords in one-line of code
-- Auto-collapses and disables the form on successful authentication
+
+- **One-line Integration**: Add authentication to your Streamlit app with a single function call.
+- **Secure Password Hashing**: Uses the award-winning [Argon2](https://github.com/p-h-c/phc-winner-argon2) algorithm for password security.
+- **Password Constraints**: Enforces strong password rules out-of-the-box.
+- **Multi-Mode Login**: Supports account creation, login, and guest access.
+- **Automatic Password Hashing**: Plaintext passwords are automatically hashed on login or via a bulk update.
+- **Session Management**: Seamlessly handles login and logout, with a clear session state and a logout button that replaces the login form.
+- **Customizable UI**: Easily change form labels, placeholders, and messages.
+- **Supabase Integration**: Connects directly to your Supabase database for persistent user management.
+- **Extensible**: Designed for future support of other databases (e.g., MySQL).
 
 ## :building_construction: Installation
 
@@ -66,10 +70,9 @@ pip install st-login-form
   ```
 4. Follow the rest of the steps from [here](https://docs.streamlit.io/knowledge-base/tutorials/databases/supabase#copy-your-app-secrets-to-the-cloud) to connect your Streamlit app to Supabase
 
-
 ## :pen: Usage
 
-On authentication, `login_form()` sets the `st.session_state['authenticated']` to `True`. This also collapses and disables the login form.  
+On authentication, `login_form()` sets the `st.session_state['authenticated']` to `True`, and replaces the login form with a logout button.  
 `st.session_state['username']` is set to the provided username for a new or existing user, and to `None` for guest login.
 
 ```python
@@ -91,13 +94,24 @@ else:
     st.error("Not authenticated")
 ```
 
+### :arrow_left: Logging out
+
+After a user is authenticated, the login form is fully replaced by a **Logout** button. Clicking this button will log the user out and bring back the login form.
+
+You can also log out programmatically by calling:
+
+```python
+from st_login_form import logout
+logout()  # This will reset authentication and rerun the app
+```
+
 ### :key: Hashing existing plaintext passwords
 
 Plaintext password for a user is automatically hashed during a login attempt.
 
 To bulk-update all existing plaintext passwords in the table, use the `hash_current_passwords()` method.
 
-### :bulb: API Reference
+## :bulb: API Reference
 
 - `login_form()`
 
@@ -217,7 +231,6 @@ Here are some features that are planned for future releases across the library a
 ### Library Features
 - [ ] Add `init()` method to create required database tables
 - [ ] Customize password constraints (minimum length, allowed characters, etc.)
-- [ ] Add logout option
 - [ ] Capture additional login metadata - created_at, last_login_at, num_logins, etc.
 - [ ] Add admin panel to set user roles and permissions
 - [ ] Add password recovery option
