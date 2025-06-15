@@ -20,11 +20,11 @@ class CreateAccountConfig:
     password: FieldConfig
     submit_label: str
     constrain_password: bool
-    password_fail_message: str
-    create_retype_password_label: str
-    create_retype_password_placeholder: str
-    create_retype_password_help: str
-    password_mismatch_message: str
+    password_fail_message: Optional[str] = None
+    create_retype_password_label: Optional[str] = None
+    create_retype_password_placeholder: Optional[str] = None
+    create_retype_password_help: Optional[str] = None
+    password_mismatch_message: Optional[str] = None
 
 
 @dataclasses.dataclass
