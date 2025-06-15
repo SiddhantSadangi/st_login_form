@@ -1,4 +1,5 @@
 try:
+    import inspect
     import traceback
 
     import streamlit as st
@@ -25,7 +26,7 @@ try:
         sidebar_html = sidebar_file.read().replace("{VERSION}", VERSION)
 
     with st.sidebar:
-        st_html(sidebar_html, height=243)
+        st_html(sidebar_html, height=290)
 
         st.html(
             """
@@ -77,21 +78,21 @@ try:
         st.write("2. Import")
         st.code("from st_login_form import login_form", language="python")
         st.write("3. Use")
-        st.code("client = login_form()", language="python")
+        st.code("supabase_connection = login_form()", language="python")
         st.info(
             "Detailed installation instructions [here](https://github.com/SiddhantSadangi/st_login_form?tab=readme-ov-file#building_construction-installation)."
         )
         st.write(
-            "`login_form()` creates the below form and returns the `Supabase.client` instance that can then be used to perform downstream supabase operations"
+            "`login_form()` creates the below form and, after successful authentication, returns the [`SupabaseConnection`](https://github.com/SiddhantSadangi/st_supabase_connection) instance that can then be used to perform downstream supabase operations"
         )
     with st.expander(
         "`login_form()` API reference",
         icon=":material/lightbulb:",
         expanded=False,
     ):
-        st.write(st_login_form.login_form.__doc__)
+        st.code(inspect.getdoc(st_login_form.login_form), language="docstring")
 
-    client = st_login_form.login_form(user_tablename="demo_users")
+    supabase_connection = st_login_form.login_form(user_tablename="demo_users")
 
     st.write(
         "On authentication, `login_form()` sets `st.session_state['authenticated']` to `True`. This also collapses and disables the login form."
@@ -102,7 +103,7 @@ try:
 
     if st.session_state["authenticated"]:
         if st.session_state["username"]:
-            st.success(f"Welcome {st.session_state['username']}")
+            st.success(f"Welcome __{st.session_state['username']}__")
         else:
             st.success("Welcome guest")
     else:

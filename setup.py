@@ -21,7 +21,7 @@ setuptools.setup(
     url="https://github.com/SiddhantSadangi/st_login_form",
     author="Siddhant Sadangi",
     author_email="siddhant.sadangi@gmail.com",
-    description="A streamlit component that creates a user login form connected to a Supabase DB. It lets users create a new username and password, login to an existing account, or login as an anonymous guest.",
+    description="A streamlit component that creates customizable user authentication forms connected to a Supabase DB. It lets users create a new username and password, login to an existing account, or login as an anonymous guest.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     project_urls={
@@ -42,13 +42,12 @@ setuptools.setup(
         "Topic :: Security",
         "Topic :: Software Development :: User Interfaces",
     ],
-    keywords=["streamlit", "login"],
-    python_requires=">=3.8",
+    keywords=["streamlit", "login", "authentication", "supabase"],
+    python_requires=">=3.9",
     install_requires=[
         "streamlit>=1.2",
-        "jinja2",
+        "jinja2>=3.1.6",
         "st_supabase_connection>=2.0",
-        "argon2-cffi",
-        "stqdm",
+        "argon2-cffi>=23.1.0",
     ],
 )

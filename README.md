@@ -77,7 +77,7 @@ import streamlit as st
 
 from st_login_form import login_form
 
-client = login_form()
+supabase_connection = login_form()
 
 if st.session_state["authenticated"]:
     if st.session_state["username"]:
@@ -102,8 +102,9 @@ To bulk-update all existing plaintext passwords in the table, use the `hash_curr
 - `login_form()`
 
   ```python
-    def login_form(
+  def login_form(
       *,
+      supabase_connection: Optional[SupabaseConnection] = None,
       title: str = "Authentication",
       icon: str = ":material/lock:",
       user_tablename: str = "users",
@@ -121,6 +122,11 @@ To bulk-update all existing plaintext passwords in the table, use the `hash_curr
       create_password_label: str = "Create a password",
       create_password_placeholder: str = None,
       create_password_help: str = ":material/warning: Password cannot be recovered if lost",
+      create_retype_password_label: str = "Retype password",
+      create_retype_password_placeholder: str = None,
+      create_retype_password_help: str = None,
+      password_constraint_check_fail_message: str = "Password must contain at least 8 characters, including one uppercase letter, one lowercase letter, one number, and one special character (`@$!%*?&_^#- `).",
+      password_mismatch_message: str = "Passwords do not match",
       create_submit_label: str = ":material/add_circle: Create account",
       login_username_label: str = "Enter your unique username",
       login_username_placeholder: str = None,
@@ -129,17 +135,18 @@ To bulk-update all existing plaintext passwords in the table, use the `hash_curr
       login_password_placeholder: str = None,
       login_password_help: str = None,
       login_submit_label: str = ":material/login: Login",
-      login_error_message: str = ":material/lock: Wrong username/password",
-      password_constraint_check_fail_message: str = ":material/warning: Password must contain at least 8 characters, including one uppercase letter, one lowercase letter, one number, and one special character (`@$!%*?&_^#- `).",
-      guest_submit_label: str = ":material/visibility_off: Guest login",
-  ) -> Client:
-      """Creates a user login form in Streamlit apps.
+      login_error_message: str = "Wrong username/password",
+      guest_submit_label: str = "Login as guest",
+  ) -> Optional[SupabaseConnection]:
+      """
+      Creates a user login form in Streamlit apps.
 
-      Connects to a Supabase DB using `SUPABASE_URL` and `SUPABASE_KEY` Streamlit secrets.
+      Connects to a Supabase DB using `SUPABASE_URL` and `SUPABASE_KEY` Streamlit secrets, unless a connection instance is provided.
       Sets `session_state["authenticated"]` to True if the login is successful.
       Sets `session_state["username"]` to provided username or new or existing user, and to `None` for guest login.
 
-      Arguments:
+      Args:
+          supabase_connection (Optional[SupabaseConnection]): An optional Supabase connection instance. If not provided, one will be created.
           title (str): The title of the login form. Default is "Authentication".
           icon (str): The icon to display next to the title. Default is ":material/lock:".
           user_tablename (str): The name of the table in the database that stores user information. Default is "users".
@@ -157,7 +164,12 @@ To bulk-update all existing plaintext passwords in the table, use the `hash_curr
           create_password_label (str): The label for the create password input field. Default is "Create a password".
           create_password_placeholder (str): The placeholder text for the create password input field. Default is None.
           create_password_help (str): The help text for the create password input field. Default is ":material/warning: Password cannot be recovered if lost".
+          create_retype_password_label (str): The label for the create retype password input field. Default is "Retype password".
+          create_retype_password_placeholder (str): The placeholder text for the create retype password input field. Default is None.
+          create_retype_password_help (str): The help text for the create retype password input field. Default is None.
           create_submit_label (str): The label for the create account submit button. Default is ":material/add_circle: Create account".
+          password_constraint_check_fail_message (str): The error message displayed when the password does not meet the constraints. Default is "Password must contain at least 8 characters, including one uppercase letter, one lowercase letter, one number, and one special character (`@$!%*?&_^#- `).".
+          password_mismatch_message (str): The error message displayed when the passwords do not match. Default is "Passwords do not match".
           login_username_label (str): The label for the login username input field. Default is "Enter your unique username".
           login_username_placeholder (str): The placeholder text for the login username input field. Default is None.
           login_username_help (str): The help text for the login username input field. Default is None.
@@ -165,13 +177,10 @@ To bulk-update all existing plaintext passwords in the table, use the `hash_curr
           login_password_placeholder (str): The placeholder text for the login password input field. Default is None.
           login_password_help (str): The help text for the login password input field. Default is None.
           login_submit_label (str): The label for the login submit button. Default is ":material/login: Login".
-          login_error_message (str): The error message displayed when the username or password is incorrect. Default is ":material/lock: Wrong username/password".
-          password_constraint_check_fail_message (str): The error message displayed when the password does not meet the constraints. Default is ":material/warning: Password must contain at least 8 characters, including one uppercase letter, one lowercase letter, one number, and one special character (`@$!%*?&_^#- `).".
-          guest_submit_label (str): The label for the guest login button. Default is ":material/visibility_off: Guest login".
-
+          login_error_message (str): The error message displayed when the username or password is incorrect. Default is "Wrong username/password".
+          guest_submit_label (str): The label for the guest login button. Default is "Login as guest".
       Returns:
-          Supabase.client: The client instance for performing downstream supabase operations.
-      """
+          Optional[SupabaseConnection]: The Supabase connection instance for performing downstream Supabase operations, or `None` if the user is not authenticated.
   ```
 
 - `hash_current_passwords()`
@@ -182,7 +191,17 @@ To bulk-update all existing plaintext passwords in the table, use the `hash_curr
       username_col: str = "username",
       password_col: str = "password",
   ) -> None:
-      """Hashes all current plaintext passwords stored in a database table (in-place)."""
+      """
+      Hashes all current plaintext passwords stored in a database table (in-place).
+
+      Args:
+          user_tablename (str, optional): The name of the user table. Defaults to "users".
+          username_col (str, optional): The column name for usernames. Defaults to "username".
+          password_col (str, optional): The column name for passwords. Defaults to "password".
+
+      Returns:
+          None
+      """
   ```
 
 ## :framed_picture: Gallery
@@ -196,7 +215,7 @@ _Want to feature your app? Create a PR!_
 Here are some features that are planned for future releases across the library and demo app. If you want to contribute to any of these features, feel free to open a PR!
 
 ### Library Features
-- [ ] Add retype password for confirmation while signing up
+- [ ] Add `init()` method to create required database tables
 - [ ] Customize password constraints (minimum length, allowed characters, etc.)
 - [ ] Add logout option
 - [ ] Capture additional login metadata - created_at, last_login_at, num_logins, etc.
