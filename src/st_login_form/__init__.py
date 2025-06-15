@@ -54,7 +54,7 @@ def login_form(
     login_password_help: str = None,
     login_submit_label: str = ":material/login: Login",
     login_error_message: str = "Wrong username/password",
-    guest_submit_label: str = ":material/visibility_off: Guest login",
+    guest_submit_label: str = "Login as guest",
 ) -> Optional[SupabaseConnection]:
     """
     Creates a user login form in Streamlit apps.
@@ -96,7 +96,7 @@ def login_form(
         login_password_help (str): The help text for the login password input field. Default is None.
         login_submit_label (str): The label for the login submit button. Default is ":material/login: Login".
         login_error_message (str): The error message displayed when the username or password is incorrect. Default is "Wrong username/password".
-        guest_submit_label (str): The label for the guest login button. Default is ":material/visibility_off: Guest login".
+        guest_submit_label (str): The label for the guest login button. Default is "Login as guest".
     Returns:
         Optional[SupabaseConnection]: The Supabase connection instance for performing downstream supabase operations, or `None` if the user is not authenticated.
 

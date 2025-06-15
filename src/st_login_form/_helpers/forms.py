@@ -73,6 +73,24 @@ def _render_input(field: FieldConfig, disabled: bool):
     return st.text_input(**kwargs)
 
 
+def _submit_form(
+    form_key: str,
+    fields: dict[str, FieldConfig],
+    submit_label: str,
+    disabled: bool,
+) -> tuple[bool, dict[str, str]]:
+    """Renders a Streamlit form for the given fields, returns (submitted, values)."""
+    with st.form(key=form_key):
+        values = {name: _render_input(field, disabled) for name, field in fields.items()}
+        submitted = st.form_submit_button(
+            label=submit_label,
+            type="primary",
+            disabled=disabled,
+            use_container_width=True,
+        )
+    return submitted, values
+
+
 def _handle_create_account(
     auth,
     client,
@@ -81,51 +99,44 @@ def _handle_create_account(
     password_col,
     cfg: CreateAccountConfig,
 ):
-    with st.form(key="create"):
-        username = _render_input(cfg.username, disabled=st.session_state["authenticated"])
-        password_field = FieldConfig(**{**cfg.password.__dict__, "type": "password"})
-        password = _render_input(password_field, disabled=st.session_state["authenticated"])
-        retype_password_field = dataclasses.replace(
-            password_field,
+    disabled = st.session_state["authenticated"]
+    fields = {
+        "username": cfg.username,
+        "password": dataclasses.replace(cfg.password, type="password"),
+        "retype": dataclasses.replace(
+            cfg.password,
             type="password",
             label=cfg.create_retype_password_label,
             placeholder=cfg.create_retype_password_placeholder,
             help=cfg.create_retype_password_help,
-        )
-        retype_password = _render_input(
-            retype_password_field, disabled=st.session_state["authenticated"]
-        )
+        ),
+    }
 
-        if st.form_submit_button(
-            label=cfg.submit_label,
-            type="primary",
-            disabled=st.session_state["authenticated"],
-            use_container_width=True,
-        ):
-            if not username or not password or not retype_password:
-                st.error("Please fill in all fields", icon=":material/warning:")
-                st.stop()
+    submitted, inputs = _submit_form("create", fields, cfg.submit_label, disabled)
+    if not submitted:
+        return
 
-            if password != retype_password:
-                st.error(cfg.password_mismatch_message, icon=":material/warning:")
-                st.stop()
-
-            if cfg.constrain_password and not _validate_password(password):
-                st.error(cfg.password_fail_message, icon=":material/warning:")
-                st.stop()
-
-            try:
-                hashed_password = auth.generate_pwd_hash(password)
-                client.table(user_tablename).insert(
-                    {username_col: username, password_col: hashed_password}
-                ).execute()
-            except Exception as e:
-                st.error(str(e), icon=":material/warning:")
-                _reset_authentication()
-                st.stop()
-            else:
-                _set_authenticated(username)
-                st.rerun()
+    username, password, retype = inputs["username"], inputs["password"], inputs["retype"]
+    if not (username and password and retype):
+        st.error("Please fill in all fields", icon=":material/warning:")
+        st.stop()
+    if password != retype:
+        st.error(cfg.password_mismatch_message, icon=":material/warning:")
+        st.stop()
+    if cfg.constrain_password and not _validate_password(password):
+        st.error(cfg.password_fail_message, icon=":material/warning:")
+        st.stop()
+    try:
+        hashed = auth.generate_pwd_hash(password)
+        client.table(user_tablename).insert(
+            {username_col: username, password_col: hashed}
+        ).execute()
+    except Exception as e:
+        st.error(str(e), icon=":material/warning:")
+        _reset_authentication()
+        st.stop()
+    _set_authenticated(username)
+    st.rerun()
 
 
 def _handle_login(
@@ -136,69 +147,68 @@ def _handle_login(
     password_col,
     cfg: LoginFormConfig,
 ):
-    with st.form(key="login"):
-        username = _render_input(cfg.username, disabled=st.session_state["authenticated"])
-        password_field = FieldConfig(**{**cfg.password.__dict__, "type": "password"})
-        password = _render_input(password_field, disabled=st.session_state["authenticated"])
+    disabled = st.session_state["authenticated"]
+    fields = {
+        "username": cfg.username,
+        "password": dataclasses.replace(cfg.password, type="password"),
+    }
 
-        if st.form_submit_button(
-            label=cfg.submit_label,
-            disabled=st.session_state["authenticated"],
-            type="primary",
-            use_container_width=True,
-        ):
-            try:
-                response = (
-                    client.table(user_tablename)
-                    .select(f"{username_col}, {password_col}")
-                    .eq(username_col, username)
-                    .execute()
-                )
-            except Exception as e:
-                st.error(str(e), icon=":material/warning:")
-                _reset_authentication()
-            else:
-                if len(response.data) > 0:
-                    db_password = response.data[0][password_col]
+    submitted, inputs = _submit_form("login", fields, cfg.submit_label, disabled)
+    if not submitted:
+        return
 
-                    if not db_password.startswith("$argon2id$"):
-                        # Hash plaintext password and update the db
-                        db_password = auth.rehash_pwd_in_db(
-                            password=db_password,
-                            username=username,
-                            client=client,
-                            user_tablename=user_tablename,
-                            password_col=password_col,
-                            username_col=username_col,
-                        )
+    username, password = inputs["username"], inputs["password"]
+    try:
+        resp = (
+            client.table(user_tablename)
+            .select(f"{username_col}, {password_col}")
+            .eq(username_col, username)
+            .execute()
+        )
+    except Exception as e:
+        st.error(str(e), icon=":material/warning:")
+        _reset_authentication()
+        return
 
-                    if auth.verify_password(db_password, password):
-                        # Verify hashed password
-                        _set_authenticated(username)
-                        # This step is recommended by the argon2-cffi documentation
-                        if auth.check_needs_rehash(db_password):
-                            _ = auth.rehash_pwd_in_db(
-                                password=password,
-                                username=username,
-                                client=client,
-                                user_tablename=user_tablename,
-                                password_col=password_col,
-                                username_col=username_col,
-                            )
-                        st.rerun()
-                    else:
-                        st.error(cfg.error_message, icon=":material/warning:")
-                        _reset_authentication()
+    if not resp.data:
+        st.error(cfg.error_message, icon=":material/warning:")
+        _reset_authentication()
+        return
 
-                else:
-                    st.error(cfg.error_message, icon=":material/warning:")
-                    _reset_authentication()
+    db_password = resp.data[0][password_col]
+    if not db_password.startswith("$argon2id$"):
+        db_password = auth.rehash_pwd_in_db(
+            password=db_password,
+            username=username,
+            client=client,
+            user_tablename=user_tablename,
+            password_col=password_col,
+            username_col=username_col,
+        )
+
+    if not auth.verify_password(db_password, password):
+        st.error(cfg.error_message, icon=":material/warning:")
+        _reset_authentication()
+        return
+
+    _set_authenticated(username)
+    if auth.check_needs_rehash(db_password):
+        _ = auth.rehash_pwd_in_db(
+            password=password,
+            username=username,
+            client=client,
+            user_tablename=user_tablename,
+            password_col=password_col,
+            username_col=username_col,
+        )
+    st.rerun()
 
 
 def _handle_guest_login(cfg: GuestLoginConfig):
     if st.button(
         label=cfg.submit_label,
         type="primary",
+        icon=":material/visibility_off:",
         disabled=st.session_state["authenticated"],
         use_container_width=True,
     ):
