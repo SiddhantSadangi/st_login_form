@@ -1,4 +1,5 @@
 try:
+    import inspect
     import traceback
 
     import streamlit as st
@@ -77,21 +78,21 @@ try:
         st.write("2. Import")
         st.code("from st_login_form import login_form", language="python")
         st.write("3. Use")
-        st.code("client = login_form()", language="python")
+        st.code("connection = login_form()", language="python")
         st.info(
             "Detailed installation instructions [here](https://github.com/SiddhantSadangi/st_login_form?tab=readme-ov-file#building_construction-installation)."
         )
         st.write(
-            "`login_form()` creates the below form and returns the `Supabase.client` instance that can then be used to perform downstream supabase operations"
+            "`login_form()` creates the below form and, after successful authentication, returns the [`SupabaseConnection`](https://github.com/SiddhantSadangi/st_supabase_connection) instance that can then be used to perform downstream supabase operations"
         )
     with st.expander(
         "`login_form()` API reference",
         icon=":material/lightbulb:",
         expanded=False,
     ):
-        st.code(st_login_form.login_form.__doc__, language="docstring")
+        st.code(inspect.getdoc(st_login_form.login_form), language="docstring")
 
-    client = st_login_form.login_form(user_tablename="demo_users")
+    connection = st_login_form.login_form(user_tablename="demo_users")
 
     st.write(
         "On authentication, `login_form()` sets `st.session_state['authenticated']` to `True`. This also collapses and disables the login form."

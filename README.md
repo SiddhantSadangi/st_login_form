@@ -77,7 +77,7 @@ import streamlit as st
 
 from st_login_form import login_form
 
-client = login_form()
+connection = login_form()
 
 if st.session_state["authenticated"]:
     if st.session_state["username"]:
@@ -104,7 +104,7 @@ To bulk-update all existing plaintext passwords in the table, use the `hash_curr
   ```python
   def login_form(
       *,
-      client: Optional[Client] = None,
+      connection: Optional[SupabaseConnection] = None,
       title: str = "Authentication",
       icon: str = ":material/lock:",
       user_tablename: str = "users",
@@ -125,6 +125,7 @@ To bulk-update all existing plaintext passwords in the table, use the `hash_curr
       create_retype_password_label: str = "Retype password",
       create_retype_password_placeholder: str = None,
       create_retype_password_help: str = None,
+      password_constraint_check_fail_message: str = ":material/warning: Password must contain at least 8 characters, including one uppercase letter, one lowercase letter, one number, and one special character (`@$!%*?&_^#- `).",
       create_submit_label: str = ":material/add_circle: Create account",
       login_username_label: str = "Enter your unique username",
       login_username_placeholder: str = None,
@@ -134,9 +135,8 @@ To bulk-update all existing plaintext passwords in the table, use the `hash_curr
       login_password_help: str = None,
       login_submit_label: str = ":material/login: Login",
       login_error_message: str = ":material/error: Wrong username/password",
-      password_constraint_check_fail_message: str = ":material/warning: Password must contain at least 8 characters, including one uppercase letter, one lowercase letter, one number, and one special character (`@$!%*?&_^#- `).",
       guest_submit_label: str = ":material/visibility_off: Guest login",
-  ) -> Client:
+  ) -> Optional[SupabaseConnection]:
       """
       Creates a user login form in Streamlit apps.
 
@@ -145,7 +145,7 @@ To bulk-update all existing plaintext passwords in the table, use the `hash_curr
       Sets `session_state["username"]` to provided username or new or existing user, and to `None` for guest login.
 
       Args:
-          client (Optional[Client]): An optional Supabase client instance. If not provided, one will be created.
+          connection (Optional[SupabaseConnection]): An optional Supabase connection instance. If not provided, one will be created.
           title (str): The title of the login form. Default is "Authentication".
           icon (str): The icon to display next to the title. Default is ":material/lock:".
           user_tablename (str): The name of the table in the database that stores user information. Default is "users".
@@ -179,7 +179,7 @@ To bulk-update all existing plaintext passwords in the table, use the `hash_curr
           guest_submit_label (str): The label for the guest login button. Default is ":material/visibility_off: Guest login".
 
       Returns:
-          Client: The Supabase client instance for performing downstream supabase operations.
+          Optional[SupabaseConnection]: The Supabase connection instance for performing downstream supabase operations.
   ```
 
 - `hash_current_passwords()`

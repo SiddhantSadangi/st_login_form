@@ -2,7 +2,6 @@ from typing import Optional
 
 import streamlit as st
 from st_supabase_connection import SupabaseConnection
-from supabase import Client
 
 from ._helpers.auth import _Authenticator, _reset_authentication
 from ._helpers.forms import (
@@ -23,7 +22,7 @@ __all__ = ["login_form", "hash_current_passwords"]
 
 def login_form(
     *,
-    client: Optional[Client] = None,
+    connection: Optional[SupabaseConnection] = None,
     title: str = "Authentication",
     icon: str = ":material/lock:",
     user_tablename: str = "users",
@@ -55,7 +54,7 @@ def login_form(
     login_submit_label: str = ":material/login: Login",
     login_error_message: str = ":material/error: Wrong username/password",
     guest_submit_label: str = ":material/visibility_off: Guest login",
-) -> Client:
+) -> Optional[SupabaseConnection]:
     """
     Creates a user login form in Streamlit apps.
 
@@ -64,7 +63,7 @@ def login_form(
     Sets `session_state["username"]` to provided username or new or existing user, and to `None` for guest login.
 
     Args:
-        client (Optional[Client]): An optional Supabase client instance. If not provided, one will be created.
+        connection (Optional[SupabaseConnection]): An optional Supabase connection instance. If not provided, one will be created.
         title (str): The title of the login form. Default is "Authentication".
         icon (str): The icon to display next to the title. Default is ":material/lock:".
         user_tablename (str): The name of the table in the database that stores user information. Default is "users".
@@ -98,10 +97,10 @@ def login_form(
         guest_submit_label (str): The label for the guest login button. Default is ":material/visibility_off: Guest login".
 
     Returns:
-        Client: The Supabase client instance for performing downstream supabase operations.
+        SupabaseConnection: The Supabase connection instance for performing downstream supabase operations.
 
     Example:
-    >>> client = st_login_form.login_form(user_tablename="demo_users")
+    >>> connection = st_login_form.login_form(user_tablename="demo_users")
 
     >>> if st.session_state["authenticated"]:
     >>>     if st.session_state["username"]:
@@ -112,8 +111,15 @@ def login_form(
     >>>     st.error("Not authenticated")
     """
 
-    if client is None:
-        client = st.connection(name="supabase", type=SupabaseConnection)
+    if connection is None:
+        connection = st.connection(name="supabase", type=SupabaseConnection)
+    elif not isinstance(connection, SupabaseConnection):
+        st.error(
+            "`connection` must be a [`SupabaseConnection`](https://github.com/SiddhantSadangi/st_supabase_connection) instance",
+            icon=":material/warning:",
+        )
+        st.stop()
+
     auth = _Authenticator()
 
     # User Authentication
@@ -151,7 +157,7 @@ def login_form(
                 )
                 _handle_create_account(
                     auth=auth,
-                    client=client,
+                    client=connection.client,
                     user_tablename=user_tablename,
                     username_col=username_col,
                     password_col=password_col,
@@ -176,7 +182,7 @@ def login_form(
             )
             _handle_login(
                 auth=auth,
-                client=client,
+                client=connection.client,
                 user_tablename=user_tablename,
                 username_col=username_col,
                 password_col=password_col,
@@ -189,7 +195,7 @@ def login_form(
                 guest_cfg = GuestLoginConfig(submit_label=guest_submit_label)
                 _handle_guest_login(cfg=guest_cfg)
 
-        return client
+        return connection if st.session_state["authenticated"] else None
 
 
 def hash_current_passwords(
@@ -211,12 +217,12 @@ def hash_current_passwords(
     from st_supabase_connection import execute_query
 
     # Initialize the Supabase connection
-    client = st.connection(name="supabase", type=SupabaseConnection)
+    connection = st.connection(name="supabase", type=SupabaseConnection)
     auth = _Authenticator()
 
     # Select usernames and plaintext passwords from the specified table
     plaintext_passwords = execute_query(
-        client.table(user_tablename)
+        connection.table(user_tablename)
         .select(f"{username_col}, {password_col}")
         .not_.like(password_col, "$argon2id$%")
     ).data
@@ -228,7 +234,7 @@ def hash_current_passwords(
             pair[password_col] = auth.generate_pwd_hash(pair[password_col])
             updates.append({username_col: pair[username_col], password_col: pair[password_col]})
 
-        client.table(user_tablename).upsert(updates).execute()
+        connection.table(user_tablename).upsert(updates).execute()
 
         st.success("All passwords hashed successfully.", icon=":material/lock:")
     else:
