@@ -44,6 +44,7 @@ def login_form(
     create_retype_password_label: str = "Retype password",
     create_retype_password_placeholder: str = None,
     create_retype_password_help: str = None,
+    password_constraint_check_fail_message: str = ":material/warning: Password must contain at least 8 characters, including one uppercase letter, one lowercase letter, one number, and one special character (`@$!%*?&_^#- `).",
     create_submit_label: str = ":material/add_circle: Create account",
     login_username_label: str = "Enter your unique username",
     login_username_placeholder: str = None,
@@ -53,7 +54,6 @@ def login_form(
     login_password_help: str = None,
     login_submit_label: str = ":material/login: Login",
     login_error_message: str = ":material/error: Wrong username/password",
-    password_constraint_check_fail_message: str = ":material/warning: Password must contain at least 8 characters, including one uppercase letter, one lowercase letter, one number, and one special character (`@$!%*?&_^#- `).",
     guest_submit_label: str = ":material/visibility_off: Guest login",
 ) -> Client:
     """

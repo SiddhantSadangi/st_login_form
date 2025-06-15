@@ -103,7 +103,7 @@ def _handle_create_account(
             use_container_width=True,
         ):
             if password != retype_password:
-                st.error("Passwords do not match")
+                st.error("Passwords do not match", icon=":material/warning:")
                 st.stop()
 
             if cfg.constrain_password and not _validate_password(password):
