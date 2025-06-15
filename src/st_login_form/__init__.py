@@ -17,7 +17,7 @@ from ._helpers.forms import (
 
 __version__ = "1.3.0"
 
-__all__ = ["login_form", "hash_current_passwords"]
+__all__ = ["login_form", "hash_current_passwords", "logout"]
 
 
 def login_form(
@@ -130,74 +130,77 @@ def login_form(
     if "username" not in st.session_state:
         st.session_state["username"] = None
 
-    with st.expander(title, icon=icon, expanded=not st.session_state["authenticated"]):
-        create_tab, login_tab, guest_tab = _get_tabs(
-            allow_create, allow_guest, create_title, login_title, guest_title
-        )
+    if not st.session_state["authenticated"]:
+        with st.expander(title, icon=icon, expanded=True):
+            create_tab, login_tab, guest_tab = _get_tabs(
+                allow_create, allow_guest, create_title, login_title, guest_title
+            )
 
-        # Create new account
-        if allow_create:
-            with create_tab:
-                create_cfg = CreateAccountConfig(
+            # Create new account
+            if allow_create:
+                with create_tab:
+                    create_cfg = CreateAccountConfig(
+                        username=FieldConfig(
+                            label=create_username_label,
+                            placeholder=create_username_placeholder,
+                            help=create_username_help,
+                        ),
+                        password=FieldConfig(
+                            label=create_password_label,
+                            placeholder=create_password_placeholder,
+                            help=create_password_help,
+                        ),
+                        submit_label=create_submit_label,
+                        constrain_password=constrain_password,
+                        password_fail_message=password_constraint_check_fail_message,
+                        create_retype_password_label=create_retype_password_label,
+                        create_retype_password_placeholder=create_retype_password_placeholder,
+                        create_retype_password_help=create_retype_password_help,
+                        password_mismatch_message=password_mismatch_message,
+                    )
+                    _handle_create_account(
+                        auth=auth,
+                        client=supabase_connection.client,
+                        user_tablename=user_tablename,
+                        username_col=username_col,
+                        password_col=password_col,
+                        cfg=create_cfg,
+                    )
+
+            # Login to existing account
+            with login_tab:
+                login_cfg = LoginFormConfig(
                     username=FieldConfig(
-                        label=create_username_label,
-                        placeholder=create_username_placeholder,
-                        help=create_username_help,
+                        label=login_username_label,
+                        placeholder=login_username_placeholder,
+                        help=login_username_help,
                     ),
                     password=FieldConfig(
-                        label=create_password_label,
-                        placeholder=create_password_placeholder,
-                        help=create_password_help,
+                        label=login_password_label,
+                        placeholder=login_password_placeholder,
+                        help=login_password_help,
                     ),
-                    submit_label=create_submit_label,
-                    constrain_password=constrain_password,
-                    password_fail_message=password_constraint_check_fail_message,
-                    create_retype_password_label=create_retype_password_label,
-                    create_retype_password_placeholder=create_retype_password_placeholder,
-                    create_retype_password_help=create_retype_password_help,
-                    password_mismatch_message=password_mismatch_message,
+                    submit_label=login_submit_label,
+                    error_message=login_error_message,
                 )
-                _handle_create_account(
+                _handle_login(
                     auth=auth,
                     client=supabase_connection.client,
                     user_tablename=user_tablename,
                     username_col=username_col,
                     password_col=password_col,
-                    cfg=create_cfg,
+                    cfg=login_cfg,
                 )
 
-        # Login to existing account
-        with login_tab:
-            login_cfg = LoginFormConfig(
-                username=FieldConfig(
-                    label=login_username_label,
-                    placeholder=login_username_placeholder,
-                    help=login_username_help,
-                ),
-                password=FieldConfig(
-                    label=login_password_label,
-                    placeholder=login_password_placeholder,
-                    help=login_password_help,
-                ),
-                submit_label=login_submit_label,
-                error_message=login_error_message,
-            )
-            _handle_login(
-                auth=auth,
-                client=supabase_connection.client,
-                user_tablename=user_tablename,
-                username_col=username_col,
-                password_col=password_col,
-                cfg=login_cfg,
-            )
+            # Guest login
+            if allow_guest:
+                with guest_tab:
+                    guest_cfg = GuestLoginConfig(submit_label=guest_submit_label)
+                    _handle_guest_login(cfg=guest_cfg)
+    elif st.button("Logout", icon=":material/logout:", use_container_width=True):
+        logout()
 
-        # Guest login
-        if allow_guest:
-            with guest_tab:
-                guest_cfg = GuestLoginConfig(submit_label=guest_submit_label)
-                _handle_guest_login(cfg=guest_cfg)
-
-        return supabase_connection if st.session_state["authenticated"] else None
+    return supabase_connection if st.session_state["authenticated"] else None
 
 
 def hash_current_passwords(
@@ -243,6 +246,14 @@ def hash_current_passwords(
         st.success("All passwords hashed successfully.", icon=":material/lock:")
     else:
         st.success("All passwords are already hashed.", icon=":material/lock:")
+
+
+def logout() -> None:
+    """
+    Logs out the current user by resetting authentication state.
+    """
+    _reset_authentication()
+    st.rerun()
 
 
 if __name__ == "__main__":
