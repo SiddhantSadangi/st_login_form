@@ -235,6 +235,7 @@ Here are some features that are planned for future releases across the library a
 - [ ] Capture additional login metadata - created_at, last_login_at, num_logins, etc.
 - [ ] Add admin panel to set user roles and permissions
 - [ ] Add password recovery option
+- [ ] [Add cookies to let users remain logged in](https://discuss.streamlit.io/t/re-new-component-st-login-form-to-create-a-user-login-form-connected-to-a-supabase-db-in-2-lines-of-code/90563)
 - [ ] Support additional databases:
   - [ ] MySQL
 
