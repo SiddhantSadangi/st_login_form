@@ -4,6 +4,9 @@
 
 name: Upload Python Package
 
+permissions:
+  contents: read
+
 on:
   release:
     types: [created]
