@@ -26,7 +26,7 @@ try:
         sidebar_html = sidebar_file.read().replace("{VERSION}", VERSION)
 
     with st.sidebar:
-        st_html(sidebar_html, height=400)
+        st_html(sidebar_html, height=320)
 
         st.html(
             """
