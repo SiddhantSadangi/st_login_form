@@ -43,11 +43,11 @@ setuptools.setup(
         "Topic :: Software Development :: User Interfaces",
     ],
     keywords=["streamlit", "login", "authentication", "supabase"],
-    python_requires=">=3.9",
+    python_requires=">=3.10",
     install_requires=[
         "streamlit>=1.2",
         "jinja2>=3.1.6",
-        "st_supabase_connection>=2.0",
+        "st_supabase_connection>=2.1.1",
         "argon2-cffi>=23.1.0",
     ],
 )
